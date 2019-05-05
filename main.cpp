@@ -2,13 +2,13 @@
 #include "movelistener.hpp"
 #include "movepropagator.hpp"
 
-#include "pieces/piecegeneric.hpp"
-#include "pieces/piecerook.hpp"
-#include "pieces/piecebishop.hpp"
-#include "pieces/pieceking.hpp"
-#include "pieces/pieceknight.hpp"
-#include "pieces/piecequeen.hpp"
-#include "pieces/piecepawn.hpp"
+#include "pieces/generic.hpp"
+#include "pieces/rook.hpp"
+#include "pieces/bishop.hpp"
+#include "pieces/king.hpp"
+#include "pieces/knight.hpp"
+#include "pieces/queen.hpp"
+#include "pieces/pawn.hpp"
 
 #include <iostream>
 #include <iomanip>

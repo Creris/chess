@@ -1,4 +1,4 @@
-#include "piecerook.hpp"
+#include "rook.hpp"
 #include <array>
 
 bool PieceRook::canMove(Position toPos, const BoardState& state) const

@@ -1,4 +1,4 @@
-#include "piecepawn.hpp"
+#include "pawn.hpp"
 #include <array>
 
 #include <iostream>
@@ -41,17 +41,6 @@ PieceType PiecePawn::getType() const
 
 std::vector<Position> PiecePawn::getAllAvailableMoves(const BoardState& state) const
 {
-	std::vector<Position> poss;
-	//iterative through map
-	for (int i = 0; i < state.height; ++i) {
-		for (int j = 0; j < state.width; ++j) {
-			Position p{ i, j };
-			if (canMove(p, state))	poss.push_back(p);
-		}
-	}
-
-	return poss;
-
 	std::vector<Position> positions;
 
 	int rankMultiplier = Color::Black == color ? -1 : 1;

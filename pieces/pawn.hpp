@@ -3,7 +3,7 @@
 #ifndef PIECE_PAWN_HEADER_H_
 #define PIECE_PAWN_HEADER_H_
 
-#include "piecegeneric.hpp"
+#include "generic.hpp"
 
 class PiecePawn : public PieceGeneric {
 	bool isInitialPosition() const {

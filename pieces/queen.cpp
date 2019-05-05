@@ -1,4 +1,4 @@
-#include "piecequeen.hpp"
+#include "queen.hpp"
 #include <array>
 
 bool PieceQueen::canMove(Position toPos, const BoardState& state) const

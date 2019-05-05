@@ -3,7 +3,7 @@
 #ifndef PIECE_ROOK_HEADER_H_
 #define PIECE_ROOK_HEADER_H_
 
-#include "piecegeneric.hpp"
+#include "generic.hpp"
 
 class PieceRook : public PieceGeneric {
 public:

@@ -3,7 +3,7 @@
 #ifndef PIECE_BISHOP_HEADER_H_
 #define PIECE_BISHOP_HEADER_H_
 
-#include "piecegeneric.hpp"
+#include "generic.hpp"
 
 class PieceBishop : public PieceGeneric {
 public:

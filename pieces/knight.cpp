@@ -1,4 +1,4 @@
-#include "pieceknight.hpp"
+#include "knight.hpp"
 #include <algorithm>
 
 const std::vector<Position>& PieceKnight::_allPossibleMoves() const

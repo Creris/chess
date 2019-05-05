@@ -3,7 +3,7 @@
 #ifndef PIECE_QUEEN_HEADER_H_
 #define PIECE_QUEEN_HEADER_H_
 
-#include "piecegeneric.hpp"
+#include "generic.hpp"
 
 class PieceQueen : public PieceGeneric {
 public:

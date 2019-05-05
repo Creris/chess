@@ -1,4 +1,4 @@
-#include "pieceking.hpp"
+#include "king.hpp"
 
 bool PieceKing::canMove(Position toPos, const BoardState& state) const
 {

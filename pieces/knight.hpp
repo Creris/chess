@@ -3,7 +3,7 @@
 #ifndef PIECE_KNIGHT_HEADER_H_
 #define PIECE_KNIGHT_HEADER_H_
 
-#include "piecegeneric.hpp"
+#include "generic.hpp"
 #include <vector>
 
 class PieceKnight : public PieceGeneric {
