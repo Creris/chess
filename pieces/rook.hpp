@@ -3,6 +3,11 @@
 #ifndef PIECE_ROOK_HEADER_H_
 #define PIECE_ROOK_HEADER_H_
 
+/*
+	This file contains:
+		- Definition of PieceRook that derives from a generic piece.
+*/
+
 #include "generic.hpp"
 
 class PieceRook : public PieceGeneric {

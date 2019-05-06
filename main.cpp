@@ -82,6 +82,7 @@ int main() {
 	};
 
 	board.squares[queen->getPosition().first][queen->getPosition().second] = { queen->getType(), queen->getColor() };
+	queen->move({ 3, 1 }, board);
 
 	std::array<std::array<char, 8>, 8> graphicBoard = { ' ' };
 	for (int rank = board.height - 1; rank >= 0; rank--) {
@@ -101,17 +102,4 @@ int main() {
 	printBoard(graphicBoard);
 
 	return 0;
-	
-	for (int j = board.height - 1; j >= 0; --j) {
-		for (int i = 0; i < board.width; i++) {
-			auto piece = board.squares[i][j];
-			auto c = output(piece.type);
-			if (piece.color == Color::Black)
-				c = std::tolower(c);
-			std::cout << ' ' << c << ' ';
-			if (queen->canMove({ i, j }, board))
-				std::cout << " * ";
-		}
-		std::cout << "\n\n";
-	}
 }

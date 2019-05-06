@@ -12,8 +12,6 @@ const std::vector<Position>& PieceKnight::_allPossibleMoves() const
 	return vec;
 }
 
-#include <iostream>
-
 bool PieceKnight::canMove(Position toPos, const BoardState& state) const
 {
 	//If outside of the board or we are already staying there, invalid move

@@ -3,6 +3,11 @@
 #ifndef PIECE_KING_HEADER_H_
 #define PIECE_KING_HEADER_H_
 
+/**
+	This file contains:
+		- Defintion of a King piece that derives from a generic piece.
+*/
+
 #include "generic.hpp"
 
 class PieceKing : public PieceGeneric {

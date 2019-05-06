@@ -8,7 +8,7 @@ Chess made in C++ as a fun side project.
   * Check
   * Checkmate
   * Castling
-  * En Passant
+  * ~~En Passant~~
   * 50 move rule
   * 3-fold repetition
 

@@ -3,6 +3,11 @@
 #ifndef PIECE_QUEEN_HEADER_H_
 #define PIECE_QUEEN_HEADER_H_
 
+/*
+	This file contains:
+		- Definition of PieceQueen which derives from a generic piece.
+*/
+
 #include "generic.hpp"
 
 class PieceQueen : public PieceGeneric {

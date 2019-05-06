@@ -3,6 +3,11 @@
 #ifndef PIECE_KNIGHT_HEADER_H_
 #define PIECE_KNIGHT_HEADER_H_
 
+/**
+	This file contains:
+		- Definition of a Knight piece derived from a generic piece.
+*/
+
 #include "generic.hpp"
 #include <vector>
 
