@@ -25,8 +25,8 @@ bool PieceKnight::canMove(Position toPos, const BoardState& state) const
 	auto it = std::find(moves.begin(), moves.end(), diff);
 	auto& square = state.squares[toPos.first][toPos.second];
 
-	return it != moves.end() && (square.type == PieceType::None ||
-		square.type == PieceType::ShadowPawn || square.color != color);
+	return it != moves.end() && (square.piece.type == PieceType::None ||
+		square.piece.type == PieceType::ShadowPawn || square.piece.color != color);
 }
 
 PieceType PieceKnight::getType() const

@@ -11,38 +11,26 @@
 
 #include "../boardstate.hpp"
 #include "../piecetype.hpp"
-#include "../movepropagator.hpp"
-#include "../movelistener.hpp"
 
 #include <vector>
 #include <algorithm>
 
+class GenericBoard;
+
 /**
 	An interface for that all pieces should use.
 
-	Is a child of MovePropagator and implements the interface.
-	This means that this class, and all children of this class will be
-	MovePropagators and therefore will be propagating events via Observer pattern
-	to all registered MoveListeners.
-
-	\sa MovePorpagator()
-	\sa MoveListener()
+	At the same time is a propagator of moves which any board can register into
+	and await calls for 
 */
-class PieceGeneric : public MovePropagator {
+class PieceGeneric {
 	/**
 		List of listeners for events.
 	*/
-	std::vector<std::shared_ptr<MoveListener>> listeners;
+	std::vector<GenericBoard*> listeners;
 
-	void _execPre() {
-		for (auto& ptr : listeners)
-			ptr->preMove(this);
-	}
-
-	void _execPost() {
-		for (auto& ptr : listeners)
-			ptr->postMove(this);
-	}
+	void _execPre(const Position& target);
+	void _execPost(const Position& origin);
 protected:
 	Position position;		/**< Position of the piece. */
 	Color color;			/**< Color of the piece. */
@@ -57,21 +45,9 @@ protected:
 		\param state BoardState to perform this move over. Will be updated.
 		\sa isInsideBoard()
 	*/
-	virtual void moveAction(Position toPos, BoardState& state) {
-		if (!isInsideBoard(toPos, state))
-			return;
-
-		state.squares[toPos.first][toPos.second] = { getType(), getColor() };
-		state.squares[position.first][position.second] = { PieceType::None, Color::None };
-		position = toPos;
-	}
+	virtual void moveAction(Position toPos, BoardState& state);
 public:
 	PieceGeneric(Color c) : position{}, color(c) {}
-	~PieceGeneric() = default;
-	PieceGeneric(const PieceGeneric&) = default;
-	PieceGeneric(PieceGeneric&&) noexcept = default;
-	PieceGeneric& operator=(const PieceGeneric&) = default;
-	PieceGeneric& operator=(PieceGeneric&&) noexcept = default;
 
 	//Have to override these as they are essential
 	/**
@@ -97,25 +73,19 @@ public:
 		Set a position of a piece to given position.
 		Does not propagate events to listeners.
 	*/
-	void setPosition(Position newPos) {
-		position = newPos;
-	}
+	void setPosition(Position newPos);
 
 	/**
 		Get position.
 		\return Position of a piece.
 	*/
-	Position getPosition() const {
-		return position;
-	}
+	Position getPosition() const;
 
 	/**
 		Get a color.
 		\return Color of a piece.
 	*/
-	Color getColor() const {
-		return color;
-	}
+	Color getColor() const;
 
 	/**
 		Given a state of a board, check whether given position is inside of
@@ -126,11 +96,7 @@ public:
 		\return True if pos is within valid position for a board with its state state.
 				False otherwise.
 	*/
-	bool isInsideBoard(Position pos, const BoardState& state) const {
-		return pos.first >= 0 && pos.second >= 0 &&
-			pos.first < state.width && pos.second < state.height;
-	}
-	
+	bool isInsideBoard(Position pos, const BoardState& state) const;
 
 	//Can override these if the figure wants to modify this behaviour.
 	/**
@@ -141,9 +107,7 @@ public:
 
 		\return Vector of all possible upgrades. Empty vector if none available.
 	*/
-	virtual std::vector<PieceType> getUpgradeOptions() const {
-		return {};
-	}
+	virtual std::vector<PieceType> getUpgradeOptions() const;
 
 	/**
 		Returns a list of all available moves for this piece with given board state.
@@ -170,22 +134,15 @@ public:
 		\sa moveAction()
 		\return Whether the move was sucessful or not.
 	*/
-	bool move(Position toPos, BoardState& state) {
-		//If the move is not valid, ignore it and return empty state
-		//to make sure the caller knows this was not successful
-		if (this->canMove(toPos, state)) {
-			_execPre();
-			this->moveAction(toPos, state);
-			_execPost();
-			return true;
-		}
-		return false;
-	}
+	bool move(Position toPos, BoardState& state);
 
-	// Inherited via MovePropagator
-	void addListener(const std::shared_ptr<MoveListener>& listener) override {
-		listeners.push_back(listener);
-	}
+	/**
+		Add new event listener.
+		Does not prevent double addition.
+
+		\param listener Event listener that will be notified of any moves.
+	*/
+	void addListener(GenericBoard* listener);
 
 	/**
 		Remove event listener from list of listeners.
@@ -194,15 +151,10 @@ public:
 
 		\param listener Event listener to remove from the list of listeners.
 	*/
-	void removeListener(const std::shared_ptr<MoveListener>& listener) override {
-		listeners.erase(std::remove(listeners.begin(), listeners.end(), listener),
-						listeners.end());
-	}
+	void removeListener(GenericBoard* listener);
 
 	/** Remove all listeners. */
-	void clearListeners() override {
-		listeners = {};
-	}
+	void clearListeners();
 };
 
 #endif // GENERIC_PIECE_HEADER_H_

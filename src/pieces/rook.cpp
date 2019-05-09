@@ -38,7 +38,7 @@ bool PieceRook::canMove(Position toPos, const BoardState& state) const
 	//if we can move to one square at a time and check if it is occupied
 	//by anything that can block us
 	while (moveCloser(posCopy.first, toPos.first, posCopy.second, toPos.second)) {
-		switch (state.squares[posCopy.first][posCopy.second].type) {
+		switch (state.squares[posCopy.first][posCopy.second].piece.type) {
 		case PieceType::None:
 		case PieceType::ShadowPawn:
 			//These are nonblocking
@@ -47,7 +47,7 @@ bool PieceRook::canMove(Position toPos, const BoardState& state) const
 			//Return whether the square is occupied by enemy AND the position is final
 			//if the position isn't final, we can't reach the desired square
 			//if it is final, we can step on it, granted if it is an enemy piece
-			return state.squares[posCopy.first][posCopy.second].color != color
+			return state.squares[posCopy.first][posCopy.second].piece.color != color
 				&& toPos == posCopy;
 		}
 	}

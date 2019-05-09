@@ -18,6 +18,7 @@
 #include "piecetype.hpp"
 #include <stdexcept>
 #include <utility>
+#include <array>
 
 /**
 	Represents a position on a board.
@@ -43,9 +44,9 @@ enum class Color {
 };
 
 /**
-	Information about a piece that is used by BoardState.
+	Information about a square on the board that is used by BoardState.
 
-	Contains a type of a piece, and its color.
+	Contains a type of a piece and its color.
 	
 	Note that even if type == PieceType::None, the color might not necessarily
 	be equal to None.
@@ -53,6 +54,21 @@ enum class Color {
 struct PieceInfo {
 	PieceType type;
 	Color color;
+};
+
+struct SquareInfo {
+	/**
+		Information about the piece at this square.
+	*/
+	PieceInfo piece;
+
+	/**
+		How many pieces are attacking this square.
+
+		[0] = white attackers.
+		[1] = black attackers.
+	*/
+	std::array<int8_t, 2> threat;
 };
 
 /**
@@ -66,7 +82,7 @@ struct BoardState {
 	/**
 		Represents the information about every square on the board.
 	*/
-	std::vector<std::vector<PieceInfo>> squares;
+	std::vector<std::vector<SquareInfo>> squares;
 };
 
 /**

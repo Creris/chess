@@ -8,9 +8,13 @@ bool PieceKing::canMove(Position toPos, const BoardState& state) const
 
 	auto& square = state.squares[toPos.first][toPos.second];
 	Position diff = { toPos.first - position.first, toPos.second - position.second };
-	return (square.color != color || square.type == PieceType::None ||
-			square.type == PieceType::ShadowPawn)
-		&& std::abs(diff.first) < 2 && std::abs(diff.second) < 2;
+	auto attIdx = Color::Black == color ? 0 : 1;
+
+	return (square.piece.color != color || square.piece.type == PieceType::None ||
+			square.piece.type == PieceType::ShadowPawn)
+		&& std::abs(diff.first) < 2 && std::abs(diff.second) < 2
+		//Can't move towards a check
+		&& !square.threat[attIdx];
 }
 
 PieceType PieceKing::getType() const

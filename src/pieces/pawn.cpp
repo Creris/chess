@@ -13,21 +13,21 @@ bool PiecePawn::canMove(Position toPos, const BoardState& state) const
 
 	//Check diagonals, they have to be enemies
 	if (std::abs(diff.second) == 1) {
-		return std::abs(diff.first) == 1 && square.color != color &&
-			square.type != PieceType::None;
+		return std::abs(diff.first) == 1 && square.piece.color != color &&
+			square.piece.type != PieceType::None;
 	}
 
 	int rankMultiplier = Color::Black == color ? -1 : 1;
 
 	//Check front
 	if (!diff.second && diff.first == -rankMultiplier)
-		return square.type == PieceType::None || square.type == PieceType::ShadowPawn;
+		return square.piece.type == PieceType::None || square.piece.type == PieceType::ShadowPawn;
 
 	//Check double front, if initial position
 	if (!diff.second && diff.first == 2 * -rankMultiplier && isInitialPosition()) {
 		Position sqPos = { toPos.first - rankMultiplier,
-									toPos.second - rankMultiplier };
-		return square.type == PieceType::None || square.type == PieceType::ShadowPawn
+									toPos.second };
+		return square.piece.type == PieceType::None || square.piece.type == PieceType::ShadowPawn
 			&& canMove(sqPos, state);
 	}
 
@@ -61,4 +61,27 @@ std::vector<Position> PiecePawn::getAllAvailableMoves(const BoardState& state) c
 	}
 
 	return positions;
+}
+
+std::vector<PieceType> PiecePawn::getUpgradeOptions() const
+{
+	static std::vector<PieceType> types = {
+		PieceType::Rook,
+		PieceType::Bishop,
+		PieceType::Queen,
+		PieceType::Knight
+	};
+
+	return types;
+}
+
+void PiecePawn::moveAction(Position toPos, BoardState& state)
+{
+	Position diff{ position.first - toPos.first, position.second - toPos.second };
+	if (std::abs(diff.first) > 1) {
+		auto& square = state.squares[position.first - diff.first / 2][position.second];
+		square.piece = { PieceType::ShadowPawn, getColor() };
+	}
+
+	PieceGeneric::moveAction(toPos, state);
 }

@@ -20,8 +20,8 @@ public:
 	PieceKing& operator=(PieceKing&&) noexcept = default;
 
 	// Inherited via PieceGeneric
-	virtual bool canMove(Position toPos, const BoardState& state) const override;
-	virtual PieceType getType() const override;
+	bool canMove(Position toPos, const BoardState& state) const override;
+	PieceType getType() const override;
 
 	std::vector<Position> getAllAvailableMoves(const BoardState& state) const override;
 };

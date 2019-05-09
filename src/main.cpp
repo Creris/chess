@@ -1,27 +1,29 @@
-
-#include "movelistener.hpp"
-#include "movepropagator.hpp"
-
-#include "pieces/generic.hpp"
-#include "pieces/rook.hpp"
-#include "pieces/bishop.hpp"
-#include "pieces/king.hpp"
-#include "pieces/knight.hpp"
-#include "pieces/queen.hpp"
-#include "pieces/pawn.hpp"
+#include "pieces/piecebuilder.hpp"
 
 #include <iostream>
 #include <iomanip>
 #include <array>
 #include <cctype>
 
+#include "boards/boardbuilder.hpp"
+#include "boards/chess.hpp"
+
 int main() {
-	auto queen = std::make_shared<PiecePawn>(PiecePawn{ Color::White });
-	queen->setPosition({ 2, 2 });
+	BoardBuilder& b = BoardBuilder::getInstance();
+	auto brd = b.build("Chess");
+	std::cout << brd << "\n";
+	brd = b.build("Chess");
+	std::cout << brd << "\n";
+
+	brd->preMove(nullptr, {});
+	
+	return 0;
+
+	auto queen = newPieceByType(PieceType::Pawn, { 1, 2 }, Color::White);
 	auto board = BoardState{ 8, 8, {} };
 	board.squares.resize(8);
 	for (auto& file : board.squares)
-		file.resize(8, PieceInfo{ PieceType::None, Color::None });
+		file.resize(8, SquareInfo{ PieceInfo{ PieceType::None, Color::None }, {0, 0} });
 
 	auto output = [](PieceType type) {
 		switch (type) {
@@ -37,6 +39,8 @@ int main() {
 			return 'P';
 		case PieceType::Rook:
 			return 'R';
+		case PieceType::ShadowPawn:
+			return 'S';
 		}
 		return ' ';
 	};
@@ -61,15 +65,13 @@ int main() {
 		{ PieceType::Knight,	Color::Black },
 		{ PieceType::Rook,		Color::Black }
 	};
-	for (auto& squares : board.squares[0])	squares.color = Color::White;
-	for (auto& squares : board.squares[1])	squares.color = Color::White;
+	for (auto& squares : board.squares[0])	squares.piece.color = Color::White;
+	for (auto& squares : board.squares[1])	squares.piece.color = Color::White;
 
-	for (auto& squares : board.squares[3]) {
-		squares.color = Color::Black;
-		squares.type = PieceType::Rook;
+	for (auto& squares : board.squares[4]) {
+		squares.piece.color = Color::Black;
+		squares.piece.type = PieceType::Rook;
 	}
-
-	board.squares[3][2] = { PieceType::None, Color::None };
 
 	auto printBoard = [](const auto& board) {
 		for(int i = board.size() - 1; i >= 0; --i){
@@ -82,14 +84,17 @@ int main() {
 	};
 
 	board.squares[queen->getPosition().first][queen->getPosition().second] = { queen->getType(), queen->getColor() };
-	queen->move({ 3, 1 }, board);
+	queen->move({ 3, 2 }, board);
+
+	queen = newPieceByType(PieceType::Pawn, { 3, 1 }, Color::Black);
+	board.squares[3][1] = { PieceType::Pawn, Color::Black };
 
 	std::array<std::array<char, 8>, 8> graphicBoard = { ' ' };
 	for (int rank = board.height - 1; rank >= 0; rank--) {
 		for (int file = 0; file < board.width; file++) {
-			auto piece = board.squares[rank][file];
-			auto c = output(piece.type);
-			if (piece.color == Color::Black)
+			auto square = board.squares[rank][file];
+			auto c = output(square.piece.type);
+			if (square.piece.color == Color::Black)
 				c = std::tolower(c);
 			graphicBoard[rank][file] = c;
 		}

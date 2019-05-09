@@ -29,9 +29,11 @@ public:
 	PiecePawn& operator=(PiecePawn&&) noexcept = default;
 
 	// Inherited via PieceGeneric
-	virtual bool canMove(Position toPos, const BoardState& state) const override;
-	virtual PieceType getType() const override;
-	virtual std::vector<Position> getAllAvailableMoves(const BoardState& state) const override;
+	bool canMove(Position toPos, const BoardState& state) const override;
+	PieceType getType() const override;
+	std::vector<Position> getAllAvailableMoves(const BoardState& state) const override;
+	std::vector<PieceType> getUpgradeOptions() const override;
+	void moveAction(Position toPos, BoardState& state) override;
 };
 
 #endif // PIECE_PAWN_HEADER_H_

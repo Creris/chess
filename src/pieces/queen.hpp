@@ -20,9 +20,9 @@ public:
 	PieceQueen& operator=(PieceQueen&&) noexcept = default;
 
 	// Inherited via PieceGeneric
-	virtual bool canMove(Position toPos, const BoardState& state) const override;
-	virtual PieceType getType() const override;
-	virtual std::vector<Position> getAllAvailableMoves(const BoardState& state) const override;
+	bool canMove(Position toPos, const BoardState& state) const override;
+	PieceType getType() const override;
+	std::vector<Position> getAllAvailableMoves(const BoardState& state) const override;
 };
 
 #endif // PIECE_QUEEN_HEADER_H_
