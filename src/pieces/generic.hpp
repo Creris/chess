@@ -28,9 +28,6 @@ class PieceGeneric {
 		List of listeners for events.
 	*/
 	std::vector<GenericBoard*> listeners;
-
-	void _execPre(const Position& target);
-	void _execPost(const Position& origin);
 protected:
 	Position position;		/**< Position of the piece. */
 	Color color;			/**< Color of the piece. */
@@ -135,26 +132,6 @@ public:
 		\return Whether the move was sucessful or not.
 	*/
 	bool move(Position toPos, BoardState& state);
-
-	/**
-		Add new event listener.
-		Does not prevent double addition.
-
-		\param listener Event listener that will be notified of any moves.
-	*/
-	void addListener(GenericBoard* listener);
-
-	/**
-		Remove event listener from list of listeners.
-		Removes all instances of this listener from the list, does nothing if none
-		are found.
-
-		\param listener Event listener to remove from the list of listeners.
-	*/
-	void removeListener(GenericBoard* listener);
-
-	/** Remove all listeners. */
-	void clearListeners();
 };
 
 #endif // GENERIC_PIECE_HEADER_H_

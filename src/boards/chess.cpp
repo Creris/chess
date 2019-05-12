@@ -3,16 +3,7 @@
 
 #include "../pieces/generic.hpp"
 
-void ChessBoard::preMove(PieceGeneric* const origin, Position targetPos)
+bool ChessBoard::parseUserInput(const std::string& userInput)
 {
-	if (!origin)	return;
+	return false;
 }
-
-void ChessBoard::postMove(PieceGeneric* const origin, Position originPos)
-{
-}
-
-inline auto _chess_builder = BuilderRegister<GenericBoard>([]() -> std::shared_ptr<GenericBoard> {
-	static auto board = std::make_shared<ChessBoard>();
-	return board;
-	}, "Chess", "CHESS", "chess");

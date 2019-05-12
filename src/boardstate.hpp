@@ -56,6 +56,11 @@ struct PieceInfo {
 	Color color;
 };
 
+/**
+	Contains information about each square on a board.
+
+	Includes piece information and threat on each piece by both player colors.
+*/
 struct SquareInfo {
 	/**
 		Information about the piece at this square.

@@ -21,8 +21,24 @@ class PieceGeneric;
 class GenericBoard {
 	void _clearThreat();
 protected:
+	/**
+		Defines a storage information class for pointers to pieces.
+
+		Contains information about where the piece started at as well as if
+		it ever moved.
+	*/
+	struct PieceStorage {
+		Position startingPos = { -1, -1 };
+		std::shared_ptr<PieceGeneric> piecePtr = nullptr;
+		bool moved = false;
+
+		PieceStorage() {}
+		PieceStorage(Position _s,
+					 const std::shared_ptr<PieceGeneric>& _p) : startingPos(_s), piecePtr(_p) {}
+	};
+
 	BoardState state;
-	std::vector<std::shared_ptr<PieceGeneric>> pieces;
+	std::vector<PieceStorage> pieces;
 
 	/**
 		White's graveyard.
@@ -33,6 +49,9 @@ protected:
 		Black's graveyard.
 	*/
 	std::vector<PieceInfo> blackGrave;
+
+	PieceStorage _getPieceStorage(Position atPos) const;
+	PieceStorage _getPieceStorage(Position atPos, bool isInit) const;
 public:
 	/**
 		Construct a new instance of GenericBoard.
@@ -64,6 +83,13 @@ public:
 	const BoardState& getState() const;
 
 	/**
+		Gets the state of the board.
+
+		\return State of the board.
+	*/
+	BoardState& getState();
+
+	/**
 		Initialize the board to given state.
 
 		The state is copied.
@@ -77,22 +103,46 @@ public:
 	*/
 	void recalculateThread();
 
+	/**
+		Parse user input.
+
+		\param userInput user input to be parsed.
+		\return Whether the parser understood this command.
+	*/
+	virtual bool parseUserInput(const std::string& userInput) = 0;
 
 	/**
-		Executed right before a move happens.
+		Get a list of pieces in given player's graveyard.
 
-		\param origin The origin of this call.
-		\param targetPos The position towards which the MovePropagator is moving.
+		\param forColor Color of the player to retreive the graveyard for.
+		\return Vector of PieceInfo of graveyarded pieces.
+
+		\sa Color()
+		\sa PieceInfo()
 	*/
-	virtual void preMove(PieceGeneric* const origin, Position targetPos) = 0;
+	const std::vector<PieceInfo>& getGraveyard(Color forColor) const;
 
 	/**
-		Executed right after a move happens.
+		Get a pointer to a piece at given position.
 
-		\param origin The origin of this call.
-		\param originPos The position from which the MovePropagator moved.
+		\param atPos The position the piece should be standing at.
+		\return Pointer to a piece standing at this position.
+				If none, returns nullptr.
+
+		\sa Position()
+		\sa PieceGeneric()
 	*/
-	virtual void postMove(PieceGeneric* const origin, Position originPos) = 0;
+	std::shared_ptr<PieceGeneric> getPiece(Position atPos) const;
+
+	/**
+		Get whether a piece at a given position moved at all.
+
+		\param position Position to look for.
+		\param isInit Whether the position is initial or current.
+		
+		\return Whether a piece found in that position has ever moved.
+	*/
+	bool didMove(Position position, bool isInit = false) const;
 };
 
 #endif // GENERIC_BOARD_HEADER_H_

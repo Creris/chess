@@ -15,8 +15,7 @@ public:
 	ChessBoard& operator=(ChessBoard&&) noexcept = default;
 
 	// Inherited via GenericBoard
-	void preMove(PieceGeneric* const origin, Position targetPos) override;
-	void postMove(PieceGeneric* const origin, Position originPos) override;
+	bool parseUserInput(const std::string& userInput) override;
 };
 
 #endif // CHESS_BOARD_HEADER_H_
