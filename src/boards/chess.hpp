@@ -13,9 +13,6 @@ public:
 	ChessBoard(ChessBoard&&) noexcept = default;
 	ChessBoard& operator=(const ChessBoard&) = default;
 	ChessBoard& operator=(ChessBoard&&) noexcept = default;
-
-	// Inherited via GenericBoard
-	bool parseUserInput(const std::string& userInput) override;
 };
 
 #endif // CHESS_BOARD_HEADER_H_

@@ -11,7 +11,7 @@
 int main() {
 	auto board = getBoard(BoardType::Chess);
 
-	auto boardState = BoardState{ 8, 8, {} };
+	auto boardState = BoardState{ 8, 8, BoardType::Chess, {} };
 	boardState.squares.resize(8);
 	for (auto& file : boardState.squares)
 		file.resize(8, SquareInfo{ PieceInfo{ PieceType::None, Color::None }, {0, 0} });

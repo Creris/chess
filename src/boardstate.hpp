@@ -15,7 +15,10 @@
 
 #include <vector>
 #include <cstdint>
+
 #include "piecetype.hpp"
+#include "boardtype.hpp"
+
 #include <stdexcept>
 #include <utility>
 #include <array>
@@ -81,8 +84,10 @@ struct SquareInfo {
 	of their moves.
 */
 struct BoardState {
-	int width;		/** Width of the board. */
-	int height;		/** Height of the board. */
+	int width;		/**< Width of the board. */
+	int height;		/**< Height of the board. */
+
+	BoardType type;	/**< Board type. */
 
 	/**
 		Represents the information about every square on the board.
@@ -97,7 +102,7 @@ struct BoardState {
 	\sa isBoardStateEmpty()
 */
 inline BoardState getEmptyBoardState() {
-	return { 0, 0, {} };
+	return { 0, 0, BoardType::None, {} };
 }
 
 /**
@@ -107,7 +112,8 @@ inline BoardState getEmptyBoardState() {
 	\return Whether given state is empty or not.
 */
 inline bool isBoardStateEmpty(const BoardState& state) {
-	return state.width == 0 || state.height == 0 || state.squares.size() == 0;
+	return state.width == 0 || state.height == 0 || state.squares.size() == 0
+		|| state.type == BoardType::None;
 }
 
 #endif // BOARD_STATE_HEADER_H_

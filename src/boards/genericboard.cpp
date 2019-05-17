@@ -64,6 +64,8 @@ void GenericBoard::initialize(const BoardState& state)
 	if (state.width == this->state.width && state.height == this->state.height)
 		this->state = state;
 
+	this->state.type = BoardType::None;
+
 	for (size_t rowIdx = 0; rowIdx < this->state.squares.size(); ++rowIdx) {
 		auto& row = this->state.squares[rowIdx];
 		for (size_t colIdx = 0; colIdx < row.size(); ++colIdx) {
