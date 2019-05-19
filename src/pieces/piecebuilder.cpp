@@ -6,13 +6,9 @@
 #include "pawn.hpp"
 #include "queen.hpp"
 #include "rook.hpp"
+#include "shadowpawn.hpp"
 
-std::shared_ptr<PieceGeneric> newPieceByType(PieceInfo fromInfo, Position position)
-{
-	return newPieceByType(fromInfo.type, position, fromInfo.color);
-}
-
-std::shared_ptr<PieceGeneric> newPieceByType(PieceType type, Position position, Color c)
+std::shared_ptr<PieceGeneric> newPieceByType(PieceType type, Color c)
 {
 	auto _builder = [](PieceType type, Color c) -> std::shared_ptr<PieceGeneric> {
 		switch (type) {
@@ -28,15 +24,14 @@ std::shared_ptr<PieceGeneric> newPieceByType(PieceType type, Position position, 
 			return std::make_shared<PieceRook>(c);
 		case PieceType::Knight:
 			return std::make_shared<PieceKnight>(c);
+		case PieceType::None:
+			return std::make_shared<PieceGeneric>(c);
+		case PieceType::ShadowPawn:
+			return std::make_shared<PieceShadowPawn>(c);
 		default:
 			return nullptr;
 		}
 	};
 
-	auto ptr = _builder(type, c);
-	if (ptr) {
-		ptr->setPosition(position);
-	}
-
-	return ptr;
+	return _builder(type, c);
 }

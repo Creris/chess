@@ -12,21 +12,21 @@ const std::vector<Position>& PieceKnight::_allPossibleMoves() const
 	return vec;
 }
 
-bool PieceKnight::canMove(Position toPos, const BoardState& state) const
+bool PieceKnight::canMove(Position fromPos, Position toPos, const BoardState& state) const
 {
 	//If outside of the board or we are already staying there, invalid move
-	if (!isInsideBoard(toPos, state) || toPos == position)
+	if (!isInsideBoard(toPos, state) || toPos == fromPos)
 		return false;
 	
 	auto& moves = _allPossibleMoves();
 	Position _ = { 100, 100 };
-	Position diff = { toPos.first - position.first, toPos.second - position.second };
+	Position diff = { toPos.first - fromPos.first, toPos.second - fromPos.second };
 
 	auto it = std::find(moves.begin(), moves.end(), diff);
 	auto& square = state.squares[toPos.first][toPos.second];
-
-	return it != moves.end() && (square.piece.type == PieceType::None ||
-		square.piece.type == PieceType::ShadowPawn || square.piece.color != color);
+	auto& piece = square.piecePtr;
+	return it != moves.end() && (piece->getType() == PieceType::None ||
+		piece->getType() == PieceType::ShadowPawn || piece->getColor() != color);
 }
 
 PieceType PieceKnight::getType() const
@@ -34,7 +34,8 @@ PieceType PieceKnight::getType() const
 	return PieceType::Knight;
 }
 
-std::vector<Position> PieceKnight::getAllAvailableMoves(const BoardState& state) const
+std::vector<Position> PieceKnight::getAllAvailableMoves(Position fromPos,
+														const BoardState& state) const
 {
 	std::vector<Position> positions;
 
@@ -46,10 +47,10 @@ std::vector<Position> PieceKnight::getAllAvailableMoves(const BoardState& state)
 	//Go over all 8 possible moves by a knight(relative)
 	for (auto& a : _allPossibleMoves()) {
 		//apply the relative offset to our position
-		Position off = applyOffset(position, a);
+		Position off = applyOffset(fromPos, a);
 		//Check if we can actually move to that square, if we can
 		//store that position as a possible move
-		if (canMove(off, state))
+		if (canMove(fromPos, off, state))
 			positions.push_back(off);
 	}
 

@@ -13,6 +13,8 @@ public:
 	ChessBoard(ChessBoard&&) noexcept = default;
 	ChessBoard& operator=(const ChessBoard&) = default;
 	ChessBoard& operator=(ChessBoard&&) noexcept = default;
+
+	void initialize() override;
 };
 
 #endif // CHESS_BOARD_HEADER_H_

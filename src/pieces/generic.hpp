@@ -24,12 +24,8 @@ class GenericBoard;
 	and await calls for 
 */
 class PieceGeneric {
-	/**
-		List of listeners for events.
-	*/
-	std::vector<GenericBoard*> listeners;
 protected:
-	Position position;		/**< Position of the piece. */
+	bool _didMove = false;
 	Color color;			/**< Color of the piece. */
 
 	/**
@@ -38,13 +34,15 @@ protected:
 		Will update the BoardState state as well as its own position.
 		Will not do anything, if the new position is outside of the board.
 
+		\param fromPos Position to move from.
 		\param toPos Position to move into.
 		\param state BoardState to perform this move over. Will be updated.
 		\sa isInsideBoard()
 	*/
-	virtual void moveAction(Position toPos, BoardState& state);
+	virtual void moveAction(Position fromPos, Position toPos, BoardState& state);
 public:
-	PieceGeneric(Color c) : position{}, color(c) {}
+	PieceGeneric(Color c) : color(c) {}
+	virtual ~PieceGeneric() = default;
 
 	//Have to override these as they are essential
 	/**
@@ -54,29 +52,17 @@ public:
 		This function is pure virtual and has to be implemented in all classes
 		deriving this class.
 
-		\sa position()
+		\param fromPos A position that we want to move from.
 		\param toPos A position that we want to move towards.
 		\param state A current state of the board that the piece should evaluate over.
 		\return Whether a piece can move from its current position to given position.
+
+		\sa Position()
 	*/
-	virtual bool canMove(Position toPos, const BoardState& state) const = 0;
+	virtual bool canMove(Position fromPos, Position toPos, const BoardState& state) const;
 
 	/** Pure virtual function that returns a type of given piece. */
-	virtual PieceType getType() const = 0;
-
-
-	//Does not trigger events unlike move
-	/**
-		Set a position of a piece to given position.
-		Does not propagate events to listeners.
-	*/
-	void setPosition(Position newPos);
-
-	/**
-		Get position.
-		\return Position of a piece.
-	*/
-	Position getPosition() const;
+	virtual PieceType getType() const;
 
 	/**
 		Get a color.
@@ -93,9 +79,11 @@ public:
 		\return True if pos is within valid position for a board with its state state.
 				False otherwise.
 	*/
-	bool isInsideBoard(Position pos, const BoardState& state) const;
+	static bool isInsideBoard(Position pos, const BoardState& state);
 
+	
 	//Can override these if the figure wants to modify this behaviour.
+
 	/**
 		Get a list of all possible upgrade options for a piece.
 
@@ -111,10 +99,12 @@ public:
 
 		This method has to be implemented by all classes deriving from this class.
 		
+		\param fromPos Position to get all available moves from.
 		\param state A board state to calculate moves over.
 		\return A vector of all possible moves for this piece on a board represented by this state.
 	*/
-	virtual std::vector<Position> getAllAvailableMoves(const BoardState& state) const = 0;
+	virtual std::vector<Position> getAllAvailableMoves(Position fromPos, 
+													   const BoardState& state) const;
 
 	/**
 		Attempt to perform a move of this piece to new position on a board
@@ -123,15 +113,20 @@ public:
 		If the position is not valid(Either outside of the board, or the piece
 		cannot reach it), will not modify the board state.
 
-		Will trigger all preMove events on all listeners before performing the move,
-		and will trigger all postMove events on all listeners after doing it.
+		\param fromPos Position to move from.
+		\param toPos Position to move towards.
+		\param state The board state representing the board.
+		\return Whether the move was sucessful or not.
 
 		\sa canMove()
 		\sa isInsideBounds()
 		\sa moveAction()
-		\return Whether the move was sucessful or not.
 	*/
-	bool move(Position toPos, BoardState& state);
+	bool move(Position fromPos, Position toPos, BoardState& state);
+
+	bool didMove() const {
+		return _didMove;
+	}
 };
 
 #endif // GENERIC_PIECE_HEADER_H_

@@ -1,14 +1,14 @@
 #include "queen.hpp"
 #include <array>
 
-bool PieceQueen::canMove(Position toPos, const BoardState& state) const
+bool PieceQueen::canMove(Position fromPos, Position toPos, const BoardState& state) const
 {
 	//If position is outside of the board, or its equal to the one
 	//we are already standing at, its invalid move
-	if (!isInsideBoard(toPos, state) || toPos == position)
+	if (!isInsideBoard(toPos, state) || toPos == fromPos)
 		return false;
 
-	Position diff{ position.first - toPos.first, position.second - toPos.second };
+	Position diff{ fromPos.first - toPos.first, fromPos.second - toPos.second };
 
 	//check if queen can move to this point ignoring obstructions
 	if (!(diff.first == 0 || diff.second == 0 ||
@@ -17,7 +17,7 @@ bool PieceQueen::canMove(Position toPos, const BoardState& state) const
 
 	//Copy position as the easiest way to do this is by modifying it
 	//but this is const method so we cant modify our position iteratively
-	auto posCopy = position;
+	auto posCopy = fromPos;
 
 	//Move from1 closer to to1 and from2 closer to to2 at the same time
 	//If from1 == to1, only moves from2 towards to2, same vice versa
@@ -36,7 +36,8 @@ bool PieceQueen::canMove(Position toPos, const BoardState& state) const
 	//if we can move to one square at a time and check if it is occupied
 	//by anything that can block us
 	while (moveCloser(posCopy.first, toPos.first, posCopy.second, toPos.second)) {
-		switch (state.squares[posCopy.first][posCopy.second].piece.type) {
+		auto& piece = *state.squares[posCopy.first][posCopy.second].piecePtr;
+		switch (piece.getType()) {
 		case PieceType::None:
 		case PieceType::ShadowPawn:
 			//These are nonblocking
@@ -45,7 +46,7 @@ bool PieceQueen::canMove(Position toPos, const BoardState& state) const
 			//Return whether the square is occupied by enemy AND the position is final
 			//if the position isn't final, we can't reach the desired square
 			//if it is final, we can step on it, granted if it is an enemy piece
-			return state.squares[posCopy.first][posCopy.second].piece.color != color
+			return piece.getColor() != color
 				&& toPos == posCopy;
 		}
 	}
@@ -58,7 +59,8 @@ PieceType PieceQueen::getType() const
 	return PieceType::Queen;
 }
 
-std::vector<Position> PieceQueen::getAllAvailableMoves(const BoardState& state) const
+std::vector<Position> PieceQueen::getAllAvailableMoves(Position fromPos, 
+													   const BoardState& state) const
 {
 	std::vector<Position> positions;
 
@@ -66,20 +68,20 @@ std::vector<Position> PieceQueen::getAllAvailableMoves(const BoardState& state) 
 	for (int i = 1; i < std::max(state.width, state.height); i++) {
 		std::array<Position, 8> diagonals = {
 			//same as bishop
-			Position{ position.first + i, position.second + i },
-			Position{ position.first + i, position.second - i },
-			Position{ position.first - i, position.second + i },
-			Position{ position.first - i, position.second - i },
+			Position{ fromPos.first + i, fromPos.second + i },
+			Position{ fromPos.first + i, fromPos.second - i },
+			Position{ fromPos.first - i, fromPos.second + i },
+			Position{ fromPos.first - i, fromPos.second - i },
 			
 			//same as rook
-			Position{ position.first, position.second + i },
-			Position{ position.first, position.second - i },
-			Position{ position.first + i, position.second },
-			Position{ position.first - i, position.second }
+			Position{ fromPos.first, fromPos.second + i },
+			Position{ fromPos.first, fromPos.second - i },
+			Position{ fromPos.first + i, fromPos.second },
+			Position{ fromPos.first - i, fromPos.second }
 		};
 
 		for (auto& p : diagonals) {
-			if (canMove(p, state))
+			if (canMove(fromPos, p, state))
 				positions.push_back(p);
 		}
 	}

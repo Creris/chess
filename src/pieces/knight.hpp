@@ -26,9 +26,9 @@ public:
 	PieceKnight& operator=(PieceKnight&&) noexcept = default;
 
 	// Inherited via PieceGeneric
-	bool canMove(Position toPos, const BoardState& state) const override;
+	bool canMove(Position fromPos, Position toPos, const BoardState& state) const override;
 	PieceType getType() const override;
-	std::vector<Position> getAllAvailableMoves(const BoardState& state) const override;
+	std::vector<Position> getAllAvailableMoves(Position fromPos, const BoardState& state) const override;
 };
 
 #endif // PIECE_KNIGHT_HEADER_H_

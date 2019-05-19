@@ -1,20 +1,15 @@
 #include "pieces/piecebuilder.hpp"
+#include "boards/boardbuilder.hpp"
 
 #include <iostream>
 #include <iomanip>
 #include <array>
 #include <cctype>
 
-#include "boards/boardbuilder.hpp"
-#include "boards/chess.hpp"
 
 int main() {
 	auto board = getBoard(BoardType::Chess);
-
-	auto boardState = BoardState{ 8, 8, BoardType::Chess, {} };
-	boardState.squares.resize(8);
-	for (auto& file : boardState.squares)
-		file.resize(8, SquareInfo{ PieceInfo{ PieceType::None, Color::None }, {0, 0} });
+	auto& boardState = board->getState();
 
 	auto output = [](PieceType type) {
 		switch (type) {
@@ -36,28 +31,7 @@ int main() {
 		return ' ';
 	};
 
-	boardState.squares[1] = boardState.squares[6] = {
-		{ PieceType::Pawn,	Color::Black },
-		{ PieceType::Pawn,	Color::Black },
-		{ PieceType::Pawn,	Color::Black },
-		{ PieceType::Pawn,	Color::Black },
-		{ PieceType::Pawn,	Color::Black },
-		{ PieceType::Pawn,	Color::Black },
-		{ PieceType::Pawn,	Color::Black },
-		{ PieceType::Pawn,	Color::Black }
-	};
-	boardState.squares[0] = boardState.squares[7] = {
-		{ PieceType::Rook,		Color::Black },
-		{ PieceType::Knight,	Color::Black },
-		{ PieceType::Bishop,	Color::Black },
-		{ PieceType::Queen,		Color::Black },
-		{ PieceType::King,		Color::Black },
-		{ PieceType::Bishop,	Color::Black },
-		{ PieceType::Knight,	Color::Black },
-		{ PieceType::Rook,		Color::Black }
-	};
-	for (auto& squares : boardState.squares[0])	squares.piece.color = Color::White;
-	for (auto& squares : boardState.squares[1])	squares.piece.color = Color::White;
+	board->initialize();
 
 	auto printBoard = [](const auto & board) {
 		for (int i = board.size() - 1; i >= 0; --i) {
@@ -69,27 +43,28 @@ int main() {
 		}
 	};
 
-	boardState.squares[3][2] = { {PieceType::Pawn, Color::Black}, {0, 0} };
-
-	board->initialize(boardState);
-	board->getPiece({ 1, 1 })->move({ 3, 1 }, board->getState());
+	board->tryMove({ 1, 1 }, { 3, 1 });
+	board->tryMove({ 6, 1 }, { 5, 1 });
+	board->tryMove({ 1, 0 }, { 2, 0 });
+	board->tryMove(PieceType::Queen, { 1, 3 });
 
 	std::array<std::array<char, 8>, 8> graphicBoard = { ' ' };
 	for (int rank = boardState.height - 1; rank >= 0; rank--) {
 		for (int file = 0; file < boardState.width; file++) {
-			auto square = board->getState().squares[rank][file];
-			auto c = output(square.piece.type);
-			if (square.piece.color == Color::Black)
+			auto& square = board->getState().squares[rank][file];
+			auto c = output(square.piecePtr->getType());
+			if (square.piecePtr->getColor() == Color::Black)
 				c = std::tolower(c);
 			graphicBoard[rank][file] = c;
 		}
 	}
 
-	for (auto& square : board->getPiece({ 3, 2 })->getAllAvailableMoves(board->getState())) {
+	
+	for (auto& square : board->getPiece({ 1, 3 })->getAllAvailableMoves({ 1, 3 }, board->getState())) {
 		graphicBoard[square.first][square.second] = '*';
 	}
 	
 	printBoard(graphicBoard);
-
+	
 	return 0;
 }

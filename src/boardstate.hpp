@@ -16,7 +16,6 @@
 #include <vector>
 #include <cstdint>
 
-#include "piecetype.hpp"
 #include "boardtype.hpp"
 
 #include <stdexcept>
@@ -46,37 +45,55 @@ enum class Color {
 	None,
 };
 
-/**
-	Information about a square on the board that is used by BoardState.
+//Forward declare generic piece interface
+class PieceGeneric;
 
-	Contains a type of a piece and its color.
+/**
+	Defines a storage information class for pointers to pieces.
+
+	Contains information about where the piece started at as well as if
+	it ever moved.
+*/
+struct PieceStorage {
+	Position startingPos = { -1, -1 };
+	std::shared_ptr<PieceGeneric> piecePtr = nullptr;
+	std::array<std::vector<decltype(piecePtr)>, 2> threat = {};
+
+	PieceStorage() {}
+	PieceStorage(Position _s,
+					const std::shared_ptr<PieceGeneric>& _p) : startingPos(_s), piecePtr(_p) {}
+
+	~PieceStorage() = default;
+	PieceStorage(const PieceStorage&) = default;
+	PieceStorage(PieceStorage&&) noexcept = default;
 	
-	Note that even if type == PieceType::None, the color might not necessarily
-	be equal to None.
-*/
-struct PieceInfo {
-	PieceType type;
-	Color color;
-};
-
-/**
-	Contains information about each square on a board.
-
-	Includes piece information and threat on each piece by both player colors.
-*/
-struct SquareInfo {
 	/**
-		Information about the piece at this square.
+		Visual studio 2019 diagnozed this function as deleted for some reason,
+		even if it has = default after its declaration.
+		
+		This is therefore a workaround.
 	*/
-	PieceInfo piece;
+	PieceStorage& operator=(const PieceStorage& p) {
+		startingPos = p.startingPos;
+		piecePtr = p.piecePtr;
+		threat = p.threat;
+
+		return *this;
+	}
 
 	/**
-		How many pieces are attacking this square.
+		Visual studio 2019 diagnozed this function as deleted for some reason,
+		even if it has = default after its declaration.
 
-		[0] = white attackers.
-		[1] = black attackers.
+		This is therefore a workaround.
 	*/
-	std::array<int8_t, 2> threat;
+	PieceStorage& operator=(PieceStorage&& p) noexcept {
+		startingPos = std::move(p.startingPos);
+		piecePtr = std::move(p.piecePtr);
+		threat = std::move(p.threat);
+
+		return *this;
+	}
 };
 
 /**
@@ -92,7 +109,7 @@ struct BoardState {
 	/**
 		Represents the information about every square on the board.
 	*/
-	std::vector<std::vector<SquareInfo>> squares;
+	std::vector<std::vector<PieceStorage>> squares;
 };
 
 /**

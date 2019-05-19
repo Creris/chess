@@ -16,9 +16,9 @@ class PiecePawn : public PieceGeneric {
 
 		\return Whether the pawn is on its initial position.
 	*/
-	bool isInitialPosition() const {
-		return (color == Color::Black && position.first == 6 ||
-			color == Color::White && position.first == 1);
+	bool isInitialPosition(Position fromPos) const {
+		return (color == Color::Black && fromPos.first == 6 ||
+			color == Color::White && fromPos.first == 1);
 	};
 public:
 	PiecePawn(Color c) : PieceGeneric(c) {}
@@ -29,11 +29,11 @@ public:
 	PiecePawn& operator=(PiecePawn&&) noexcept = default;
 
 	// Inherited via PieceGeneric
-	bool canMove(Position toPos, const BoardState& state) const override;
+	bool canMove(Position fromPos, Position toPos, const BoardState& state) const override;
 	PieceType getType() const override;
-	std::vector<Position> getAllAvailableMoves(const BoardState& state) const override;
+	std::vector<Position> getAllAvailableMoves(Position fromPos, const BoardState& state) const override;
 	std::vector<PieceType> getUpgradeOptions() const override;
-	void moveAction(Position toPos, BoardState& state) override;
+	void moveAction(Position fromPos, Position toPos, BoardState& state) override;
 };
 
 #endif // PIECE_PAWN_HEADER_H_
