@@ -1,6 +1,5 @@
-#include "genericboard.hpp"
-
-#include "../pieces/piecebuilder.hpp"
+#include "../../include/boards/genericboard.hpp"
+#include "../../include/pieces/piecebuilder.hpp"
 
 inline Position _findPawnFromShadow(const BoardState& state, Position shadowPos) {
 	if (shadowPos.first == 5)

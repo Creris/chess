@@ -1,7 +1,6 @@
-#include "boardbuilder.hpp"
-#include "chess.hpp"
-
-#include "../pieces/generic.hpp"
+#include "../../include/boards/boardbuilder.hpp"
+#include "../../include/boards/chess.hpp"
+#include "../../include/pieces/generic.hpp"
 
 void ChessBoard::initialize()
 {

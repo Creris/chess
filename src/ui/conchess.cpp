@@ -1,4 +1,4 @@
-#include "conchess.hpp"
+#include "../../include/ui/conchess.hpp"
 #include <string>
 #include <vector>
 #include <array>
@@ -6,9 +6,9 @@
 #include <string_view>
 #include <unordered_map>
 
-#include "../pieces/generic.hpp"
-#include "../profiler.hpp"
-#include "../stringutil.hpp"
+#include "../../include/pieces/generic.hpp"
+#include "../../include/profiler.hpp"
+#include "../../include/stringutil.hpp"
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
@@ -207,7 +207,7 @@ std::string getListOfCommands() {
 	for (auto& storage : helps) {
 		std::string line;
 		line.resize(maxLength, ' ');
-		for (int i = 0; i < storage.first.size(); ++i)
+		for (size_t i = 0; i < storage.first.size(); ++i)
 			line[i] = storage.first[i];
 		cmds += line + storage.second + "\n";
 	}

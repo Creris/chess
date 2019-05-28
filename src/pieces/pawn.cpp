@@ -1,8 +1,11 @@
-#include "pawn.hpp"
-#include "piecebuilder.hpp"
+#include "../../include/pieces/pawn.hpp"
+#include "../../include/pieces/piecebuilder.hpp"
+
+#include "../../include/boardstate.hpp"
+#include "../../include/piecetype.hpp"
 
 #include <array>
-#include <iostream>
+#include <vector>
 
 bool PiecePawn::canMove(Position fromPos, Position toPos, const BoardState& state) const
 {

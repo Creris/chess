@@ -1,5 +1,10 @@
-#include "knight.hpp"
+#include "../../include/pieces/knight.hpp"
+#include "../../include/boardstate.hpp"
+#include "../../include/piecetype.hpp"
+
+#include <array>
 #include <algorithm>
+#include <vector>
 
 const std::vector<Position>& PieceKnight::_allPossibleMoves() const
 {

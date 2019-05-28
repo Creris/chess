@@ -1,5 +1,9 @@
-#include "rook.hpp"
+#include "../../include/pieces/rook.hpp"
+#include "../../include/boardstate.hpp"
+#include "../../include/piecetype.hpp"
+
 #include <array>
+#include <vector>
 
 bool PieceRook::canMove(Position fromPos, Position toPos, const BoardState& state) const
 {

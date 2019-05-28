@@ -1,5 +1,10 @@
-#include "queen.hpp"
+#include "../../include/pieces/queen.hpp"
+#include "../../include/boardstate.hpp"
+#include "../../include/piecetype.hpp"
+
+#include <vector>
 #include <array>
+
 
 bool PieceQueen::canMove(Position fromPos, Position toPos, const BoardState& state) const
 {

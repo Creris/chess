@@ -1,4 +1,9 @@
-#include "king.hpp"
+#include "../../include/pieces/king.hpp"
+#include "../../include/boardstate.hpp"
+#include "../../include/piecetype.hpp"
+
+#include <array>
+#include <vector>
 
 bool PieceKing::canMove(Position fromPos, Position toPos, const BoardState& state) const
 {

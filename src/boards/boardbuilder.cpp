@@ -1,7 +1,7 @@
-#include "boardbuilder.hpp"
+#include "../../include/boards/boardbuilder.hpp"
 
-#include "chess.hpp"
-#include "genericboard.hpp"
+#include "../../include/boards/chess.hpp"
+#include "../../include/boards/genericboard.hpp"
 
 template <class T>
 std::shared_ptr<GenericBoard> _getBoard() {

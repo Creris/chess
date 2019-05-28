@@ -1,4 +1,8 @@
-#include "bishop.hpp"
+#include "../../include/pieces/bishop.hpp"
+#include "../../include/boardstate.hpp"
+#include "../../include/piecetype.hpp"
+
+#include <vector>
 #include <array>
 
 bool PieceBishop::canMove(Position fromPos, Position toPos, const BoardState& state) const

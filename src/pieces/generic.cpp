@@ -1,6 +1,11 @@
-#include "generic.hpp"
-#include "piecebuilder.hpp"
-#include "../boards/genericboard.hpp"
+#include "../../include/pieces/generic.hpp"
+#include "../../include/pieces/piecebuilder.hpp"
+#include "../../include/boards/genericboard.hpp"
+#include "../../include/boardstate.hpp"
+#include "../../include/piecetype.hpp"
+
+#include <array>
+#include <vector>
 
 void PieceGeneric::moveAction(Position fromPos, Position toPos, BoardState& state) const {
 	if (!isInsideBoard(toPos, state))

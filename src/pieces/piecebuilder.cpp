@@ -1,12 +1,12 @@
-#include "piecebuilder.hpp"
+#include "../../include/pieces/piecebuilder.hpp"
 
-#include "bishop.hpp"
-#include "king.hpp"
-#include "knight.hpp"
-#include "pawn.hpp"
-#include "queen.hpp"
-#include "rook.hpp"
-#include "shadowpawn.hpp"
+#include "../../include/pieces/bishop.hpp"
+#include "../../include/pieces/king.hpp"
+#include "../../include/pieces/knight.hpp"
+#include "../../include/pieces/pawn.hpp"
+#include "../../include/pieces/queen.hpp"
+#include "../../include/pieces/rook.hpp"
+#include "../../include/pieces/shadowpawn.hpp"
 
 std::shared_ptr<PieceGeneric> newPieceByType(PieceType type, Color c)
 {

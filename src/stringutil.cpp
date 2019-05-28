@@ -1,4 +1,4 @@
-#include "stringutil.hpp"
+#include "../include/stringutil.hpp"
 
 Position stringToPosition(std::string_view view) {
 	if (view.size() != 2)	return { -1, -1 };
@@ -31,7 +31,7 @@ std::string join(const std::vector<std::string_view>& viewList, std::string join
 	if (!viewList.size())	return "";
 	else if (viewList.size() == 1)	return std::string{ viewList[0] };
 
-	for (int i = 0; i < viewList.size() - 1; ++i) {
+	for (size_t i = 0; i < viewList.size() - 1; ++i) {
 		result += std::string{ viewList[i] } +joiner;
 	}
 
@@ -47,7 +47,7 @@ std::string join(const std::vector<std::string>& viewList, std::string joiner) {
 	if (!viewList.size())	return "";
 	else if (viewList.size() == 1)	return viewList[0];
 
-	for (int i = 0; i < viewList.size() - 1; ++i) {
+	for (size_t i = 0; i < viewList.size() - 1; ++i) {
 		result += viewList[i] + joiner;
 	}
 
@@ -62,7 +62,7 @@ std::vector<std::string_view> split(std::string_view s, std::string_view delim, 
 
 	while (!s.empty()) {
 		bool broke = false;
-		for (int i = 0; i < s.size(); ++i) {
+		for (size_t i = 0; i < s.size(); ++i) {
 			if (_isIn(s[i], delim)) {
 				splitVec.push_back(s.substr(0, i));
 				s.remove_prefix(i + 1);
@@ -84,10 +84,10 @@ std::vector<std::string_view> split(std::string_view s, std::string_view delim, 
 std::vector<std::string> split(const std::string& s, std::string_view delim, int splitCount) {
 	std::vector<std::string> splitVec;
 
-	int idx = 0;
+	size_t idx = 0;
 	while (idx < s.size()) {
 		bool break_ = false;
-		for (int i = idx; i < s.size(); ++i) {
+		for (size_t i = idx; i < s.size(); ++i) {
 			if (_isIn(s[i], delim)) {
 				splitVec.emplace_back(s.substr(idx, i - idx));
 				idx = i + 1;

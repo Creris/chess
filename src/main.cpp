@@ -1,7 +1,6 @@
-﻿#include "pieces/piecebuilder.hpp"
-#include "boards/boardbuilder.hpp"
-
-#include "ui/conchess.hpp"
+﻿#include "../include/pieces/piecebuilder.hpp"
+#include "../include/boards/boardbuilder.hpp"
+#include "../include/ui/conchess.hpp"
 
 #include <iostream>
 #include <iomanip>
