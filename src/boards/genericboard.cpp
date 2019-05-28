@@ -2,12 +2,39 @@
 
 #include "../pieces/piecebuilder.hpp"
 
-bool withinBounds(Position pos, int width, int height) {
+inline Position _findPawnFromShadow(const BoardState& state, Position shadowPos) {
+	if (shadowPos.first == 5)
+		return { shadowPos.first - 1, shadowPos.second };
+	else if (shadowPos.first == 1)
+		return { shadowPos.first + 1, shadowPos.second };
+	return { -1, -1 };
+}
+
+inline PieceStorage _captureShadowPawn(BoardState& state, Position shadowPos) {
+	auto pawnPosition = _findPawnFromShadow(state, shadowPos);
+	if (pawnPosition.first == -1 || pawnPosition.second == -1)	return {};
+
+	auto pawnStorage = state.squares[pawnPosition.first][pawnPosition.second];
+	if (!pawnStorage.piecePtr)	return {};
+	if (pawnStorage.piecePtr->getType() != PieceType::Pawn)	return {};
+
+	state.squares[pawnPosition.first][pawnPosition.second] = {};
+	state.squares[pawnPosition.first][pawnPosition.second].piecePtr = newPieceByType(PieceType::None);
+
+	return pawnStorage;
+}
+
+inline bool withinBounds(Position pos, int width, int height) {
 	return !(pos.first < 0 || pos.second < 0 ||
 			pos.first >= height || pos.second >= width);
 }
 
 void GenericBoard::_clearThreat()
+{
+	_clearThreat(state);
+}
+
+void GenericBoard::_clearThreat(BoardState& state) const
 {
 	for (auto& row : state.squares)
 		for (auto& cell : row) {
@@ -17,6 +44,11 @@ void GenericBoard::_clearThreat()
 
 void GenericBoard::_convertNulls()
 {
+	_convertNulls(state);
+}
+
+void GenericBoard::_convertNulls(BoardState& state) const
+{
 	for (auto& row : state.squares) {
 		for (auto& piece : row) {
 			if (!piece.piecePtr)	piece.piecePtr = newPieceByType(PieceType::None);
@@ -24,40 +56,120 @@ void GenericBoard::_convertNulls()
 	}
 }
 
+bool GenericBoard::_isChecked(PieceStorage storage) const
+{
+	auto& piece = storage.piecePtr;
+	if (!piece)	return false;
+	static auto colorIndex = [](Color c) { return c == Color::White ? 0 : 1; };
+	return storage.threat[colorIndex(piece->getColor())];
+}
+
+void GenericBoard::_removeShadows(Color ofColor)
+{
+	for (int rank = 0; rank < state.squares.size(); ++rank) {
+		for (int file = 0; file < state.squares[rank].size(); ++file) {
+			auto& piece = state.squares[rank][file].piecePtr;
+			if (!piece)	continue;
+			if (!(piece->getType() == PieceType::ShadowPawn && piece->getColor() == ofColor))	continue;
+			state.squares[rank][file] = {};
+			state.squares[rank][file].piecePtr = newPieceByType(PieceType::None);
+		}
+	}
+}
+
 bool GenericBoard::_checkStalemate() const
 {
-	return false;
+	return (!getAvailableMoveCount() && !_isChecked(getKing()));
 }
 
 bool GenericBoard::_checkCheckmate() const
 {
-	return false;
-}
-
-PieceStorage GenericBoard::_getPieceStorage(Position atPos) const
-{
-	if (!withinBounds(atPos, state.width, state.height))	return {};
-	return state.squares[atPos.first][atPos.second];
-}
-
-PieceStorage GenericBoard::_getPieceStorage(Position atPos, bool isInit) const
-{
-	if (!isInit)
-		return _getPieceStorage(atPos);
+	return (!getAvailableMoveCount() && _isChecked(getKing()));
 	
-	if (!withinBounds(atPos, state.width, state.height))	return {};
+}
 
-	for (auto& row : state.squares) {
-		for (auto& col : row) {
-			if (col.startingPos == atPos)	return col;
+void GenericBoard::doUpgrade(Position fromPos, Position toPos, UpgradeCallback callback)
+{
+	auto& piece = state.squares[toPos.first][toPos.second];
+	if (!piece.piecePtr)	return;
+
+	auto pieceColor = piece.piecePtr->getColor();
+	if (pieceColor != Color::White && pieceColor != Color::Black)	return;
+	if (upgradeFieldSize <= 0)	return;
+
+	auto upgradeField = pieceColor == Color::Black ? upgradeFieldSize - 1
+		: state.height - upgradeFieldSize;
+
+	if (toPos.first >= upgradeField) {
+		auto currentType = piece.piecePtr->getType();
+		auto list = piece.piecePtr->getUpgradeOptions();
+		if (!list.size())	return;
+
+		PieceType choice = PieceType::None;
+		do {
+			choice = callback(currentType, list);
+		} while (std::find(list.begin(), list.end(), choice) == list.end());
+
+		if (choice != currentType) {
+			state.squares[toPos.first][toPos.second].piecePtr = newPieceByType(choice, pieceColor);
+		}
+	}
+
+}
+
+PieceStorage GenericBoard::getKing() const
+{
+	return getKing(state, getPlayingColor());
+}
+
+PieceStorage GenericBoard::getKing(Color color) const
+{
+	return getKing(state, color);
+}
+
+PieceStorage GenericBoard::getKing(const BoardState& state) const
+{
+	return getKing(state, getPlayingColor());
+}
+
+PieceStorage GenericBoard::getKing(const BoardState& state, Color color) const
+{
+	for (int rank = 0; rank < state.squares.size(); ++rank) {
+		for (int file = 0; file < state.squares[rank].size(); ++file) {
+			auto& piece = state.squares[rank][file].piecePtr;
+			if (!piece)	continue;
+			if (piece->getType() == PieceType::King && piece->getColor() == color)
+				return state.squares[rank][file];
 		}
 	}
 
 	return {};
 }
 
-GenericBoard::GenericBoard(int boardWidth, int boardHeight) : state{ boardWidth, boardHeight,
-																		BoardType::None, {} }
+int GenericBoard::getAvailableMoveCount() const
+{
+	return getAvailableMoveCount(getPlayingColor());
+}
+
+int GenericBoard::getAvailableMoveCount(Color color) const
+{
+	int counter = 0;
+	for (size_t rank = 0; rank < state.squares.size(); ++rank) {
+		for (size_t file = 0; file < state.squares[rank].size(); ++file) {
+			auto& piece = state.squares[rank][file].piecePtr;
+			if (!piece)						continue;
+			if (piece->getColor() != color)	continue;
+			Position pos = { static_cast<int>(rank), static_cast<int>(file) };
+			counter += getPossibleMoves(pos).size();
+		}
+	}
+	return counter;
+}
+
+GenericBoard::GenericBoard(int boardWidth, int boardHeight,
+						   int upgradeSize) : state{ boardWidth, boardHeight,
+													BoardType::None, {} },
+												upgradeFieldSize(upgradeSize)
 {
 	auto vec = std::vector<PieceStorage>{};
 	vec.resize(boardWidth);
@@ -84,17 +196,33 @@ void GenericBoard::initialize(const BoardState& state)
 	if (state.width == this->state.width && state.height == this->state.height)
 		this->state = state;
 
+	blackGrave.clear();
+	whiteGrave.clear();
+	selected = { -1, -1 };
+
 	_convertNulls();
 }
 
 void GenericBoard::initialize()
 {
+	blackGrave.clear();
+	whiteGrave.clear();
+	selected = { -1, -1 };
+	winner = Color::None;
+	currentPlayer = Color::White;
+
 	_convertNulls();
+	recalculateThreat();
 }
 
-void GenericBoard::recalculateThread()
+void GenericBoard::recalculateThreat()
 {
-	_clearThreat();
+	recalculateThreat(state);
+}
+
+void GenericBoard::recalculateThreat(BoardState& state) const
+{
+	_clearThreat(state);
 	auto cToIdx = [](Color c) {
 		return c == Color::White ? 0 : 1;
 	};
@@ -102,12 +230,14 @@ void GenericBoard::recalculateThread()
 	for (size_t rank = 0; rank < state.squares.size(); ++rank) {
 		for (size_t file = 0; file < state.squares[rank].size(); ++file) {
 			auto& piece = state.squares[rank][file].piecePtr;
-			for (auto& p : piece->getAllAvailableMoves({ 
+			if (!piece)	continue;
+			auto type = piece->getType();
+			for (auto& p : piece->getAllThreateningMoves({ 
 														static_cast<int>(rank), 
 														static_cast<int>(file)
 													  }, state)) {
 				auto& square = state.squares[p.first][p.second];
-				square.threat[cToIdx(piece->getColor())].push_back(piece);
+				square.threat[cToIdx(piece->getColor())]++;
 			}
 		}
 	}
@@ -118,170 +248,72 @@ const std::vector<PieceStorage>& GenericBoard::getGraveyard(Color forColor) cons
 	return forColor == Color::Black ? blackGrave : whiteGrave;
 }
 
-std::shared_ptr<PieceGeneric> GenericBoard::getPiece(Position atPos) const
+std::vector<PieceStorage>& GenericBoard::getGraveyard(Color forColor)
 {
-	return _getPieceStorage(atPos).piecePtr;
+	return forColor == Color::Black ? blackGrave : whiteGrave;
 }
 
-bool GenericBoard::didMove(Position position, bool isInit) const
+bool GenericBoard::select(Position atPosition)
 {
-	return _getPieceStorage(position, isInit).piecePtr->didMove();
-}
+	if (winner != Color::None)	return false;
 
-bool GenericBoard::tryMove(Position fromPos, Position toPos)
-{
-	auto oldSelect = selected;
-	auto oldPos = selectedPosition;
-	
-	select(fromPos);
-	bool move = tryMove(toPos);
-	
-	selected = oldSelect;
-	selectedPosition = oldPos;
+	if (!withinBounds(atPosition, state.width, state.height))
+		return false;
 
-	return move;
-}
+	auto piece = getPieceStorage(atPosition);
+	if (!piece.piecePtr)	return false;
+	auto type = piece.piecePtr->getType();
+	if (type == PieceType::None || type == PieceType::ShadowPawn)
+		return false;
 
-bool GenericBoard::tryMove(PieceType type, Position toPos)
-{
-	auto oldSelect = selected;
-	auto oldPos = selectedPosition;
+	if (currentPlayer != piece.piecePtr->getColor())	return false;
 
-	select(type);
-	bool move = tryMove(toPos);
-
-	selected = oldSelect;
-	selectedPosition = oldPos;
-
-	return move;
-}
-
-bool GenericBoard::tryMove(Position toPos)
-{
-	if (!selected)	return false;
-	if (selected->getColor() != currentPlayer)	return false;
-
-	if (selected->canMove(selectedPosition, toPos, state)) {
-		selected->move(selectedPosition, toPos, state);
-		unselect();
-		currentPlayer = currentPlayer == Color::White ? Color::Black : Color::White;
-		_convertNulls();
-		return true;
-	}
-
-	return false;
-}
-
-std::string GenericBoard::getTurn(int turnNumber) const
-{
-	return std::string();
-}
-
-std::vector<std::string> GenericBoard::getTurns(int turnNumberStart, int turnNumberEnd) const
-{
-	return std::vector<std::string>();
-}
-
-std::vector<std::string> GenericBoard::getTurns() const
-{
-	return std::vector<std::string>();
-}
-
-inline Position _find(const BoardState& state,
-										   PieceType type, Color color) {
-	for (int rank = 0; rank < state.squares.size(); ++rank) {
-		for (int file = 0; file < state.squares[rank].size(); ++file) {
-			auto& ptr = state.squares[rank][file].piecePtr;
-			if (!ptr)	continue;
-			if (ptr->getType() == type && ptr->getColor() == color)	return { rank, file };
-		}
-	}
-	return { -1, -1 };
-}
-
-void GenericBoard::select(PieceType pieceType)
-{
-	auto ptr = const_cast<const GenericBoard&>(*this).select(pieceType);
-	if (!ptr)	return;
-
-	selected = ptr;
-	selectedPosition = _find(state, selected->getType(), selected->getColor());
-}
-
-std::shared_ptr<PieceGeneric> GenericBoard::select(PieceType pieceType) const
-{
-	if (pieceType == PieceType::None || currentPlayer == Color::None) {
-		return nullptr;
-	}
-
-	auto& board = state.squares;
-	std::shared_ptr<PieceGeneric> stored = nullptr;
-	bool _break = false;
-
-	for (size_t rank = 0; rank < board.size(); ++rank) {
-		for (size_t file = 0; file < board[rank].size(); ++file) {
-			auto& piece = board[rank][file].piecePtr;
-			//If mismatching color, type or the piece is nullptr, continue to
-			//next one
-			if (!piece)								continue;
-			if (piece->getColor() != currentPlayer)	continue;
-			if (piece->getType() != pieceType)		continue;
-
-			//if we already found one piece like this
-			//break from the loops
-			if (stored) {
-				stored = nullptr;
-				_break = true;
-				break;
-			}
-
-			//otherwise, store it
-			stored = piece;
-		}
-
-		if (_break)	break;
-	}
-	return stored;
-}
-
-void GenericBoard::select(Position atPos)
-{
-	auto ptr = const_cast<const GenericBoard&>(*this).select(atPos);
-	if (!ptr)	return;
-	selected = ptr;
-	selectedPosition = atPos;
-}
-
-std::shared_ptr<PieceGeneric> GenericBoard::select(Position atPos) const
-{
-	if (!withinBounds(atPos, state.width, state.height) || currentPlayer == Color::None) {
-		return nullptr;
-	}
-
-	auto& piece = state.squares[atPos.first][atPos.second].piecePtr;
-	if (!piece)	return nullptr;
-	auto type = piece->getType();
-	if (type == PieceType::ShadowPawn || type == PieceType::None)
-		return nullptr;
-	if (piece->getColor() != currentPlayer)	return nullptr;
-
-	return piece;
-}
-
-std::shared_ptr<PieceGeneric>& GenericBoard::select()
-{
-	return selected;
-}
-
-const std::shared_ptr<PieceGeneric>& GenericBoard::select() const
-{
-	return selected;
+	selected = atPosition;
+	return true;
 }
 
 void GenericBoard::unselect()
 {
-	selected = nullptr;
-	selectedPosition = { -1, -1 };
+	selected = { -1, -1 };
+}
+
+PieceStorage GenericBoard::getSelected() const
+{
+	if (selected.first != -1 || selected.second != -1)
+		return state.squares[selected.first][selected.second];
+	return {};
+}
+
+Position GenericBoard::getSelectedPosition() const
+{
+	return selected;
+}
+
+std::shared_ptr<PieceGeneric> GenericBoard::getPiece(Position atPos) const
+{
+	if (!withinBounds(atPos, state.width, state.height))
+		return {};
+	return state.squares[atPos.first][atPos.second].piecePtr;
+}
+
+PieceStorage GenericBoard::getPieceStorage(Position atPos) const
+{
+	if (!withinBounds(atPos, state.width, state.height))
+		return {};
+	return state.squares[atPos.first][atPos.second];
+}
+
+bool GenericBoard::didMove() const
+{
+	return didMove(selected);
+}
+
+bool GenericBoard::didMove(Position position) const
+{
+	if (!withinBounds(position, state.width, state.height))
+		return false;
+
+	return getPieceStorage(position).didMove;
 }
 
 Color GenericBoard::getPlayingColor() const
@@ -289,19 +321,148 @@ Color GenericBoard::getPlayingColor() const
 	return currentPlayer;
 }
 
-std::vector<Position> GenericBoard::getAvailableMoves(Position fromPos) const
+bool GenericBoard::tryMove(Position fromPos, Position toPos)
 {
-	return std::vector<Position>();
+	if (winner != Color::None)	return false;
+
+	if (!withinBounds(fromPos, state.width, state.height) || 
+			!withinBounds(toPos, state.width, state.height))
+		return false;
+
+	auto& selected = state.squares[fromPos.first][fromPos.second];
+	if (!selected.piecePtr)	return false;
+	if (selected.piecePtr->getColor() != currentPlayer)	return false;
+
+	if (_canDoMove(fromPos, toPos)) {
+		_performMove(fromPos, toPos);
+		_switchColor();
+		_removeShadows(currentPlayer);
+		_convertNulls();
+		recalculateThreat();
+		_checkStaleOrCheckmate();
+		selected.didMove = true;
+		return true;
+	}
+
+	return false;
 }
 
-std::vector<Position> GenericBoard::getAvailableMoves(PieceType type) const
+bool GenericBoard::tryMove(Position fromPos, Position toPos, UpgradeCallback onUpgrade)
 {
-	std::vector<Position> vec;
+	auto _b = tryMove(fromPos, toPos);
+	if (!_b)	return false;
+	if (winner != Color::None)	return _b;
 
-	return vec;
+	doUpgrade(fromPos, toPos, onUpgrade);
+
+	return true;
 }
 
-std::vector<Position> GenericBoard::getAvailableMoves() const
+bool GenericBoard::tryMove(Position toPos)
 {
-	return std::vector<Position>();
+	return tryMove(selected, toPos);
+}
+
+bool GenericBoard::tryMove(Position toPos, UpgradeCallback onUpgrade)
+{
+	return tryMove(selected, toPos, onUpgrade);
+}
+
+std::vector<Position> GenericBoard::getPossibleMoves() const
+{
+	return getPossibleMoves(selected);
+}
+
+std::vector<Position> GenericBoard::getPossibleMoves(Position pieceAtPos) const
+{
+	if (!withinBounds(pieceAtPos, state.width, state.height))
+		return {};
+	
+	auto& piece = state.squares[pieceAtPos.first][pieceAtPos.second];
+	if (!piece.piecePtr)	return {};
+
+	std::vector<Position> filtered;
+
+	for (auto& pos : piece.piecePtr->getAllAvailableMoves(pieceAtPos, state)) {
+		if (_canDoMove(pieceAtPos, pos))
+			filtered.push_back(pos);
+	}
+
+	return filtered;
+}
+
+Color GenericBoard::getWinner() const
+{
+	return winner;
+}
+
+void GenericBoard::forfeit()
+{
+	if (winner != Color::None)	return;
+	winner = currentPlayer == Color::White ? Color::Black : Color::White;
+}
+
+bool GenericBoard::_canDoMove(Position fromPos, Position toPos) const
+{
+	if (!withinBounds(fromPos, state.width, state.height) ||
+			!withinBounds(toPos, state.width, state.height))
+		return false;
+
+	auto fakeState = state;
+	auto& piece = fakeState.squares[fromPos.first][fromPos.second];
+	if (!piece.piecePtr)	return false;
+	auto moved = piece.piecePtr->move(fromPos, toPos, fakeState);
+	if (!moved.first)	return false;
+
+	auto enemyPlayer = currentPlayer == Color::White ? 1 : 0;
+
+	recalculateThreat(fakeState);
+	if (getKing(fakeState).threat[enemyPlayer])
+		return false;
+
+	return true;
+}
+
+void GenericBoard::_performMove(Position fromPos, Position toPos)
+{
+	if (!withinBounds(fromPos, state.width, state.height) ||
+			!withinBounds(toPos, state.width, state.height))
+		return;
+
+	//get reference to current piece
+	auto& piece = state.squares[fromPos.first][fromPos.second];
+
+	//if it is nullptr, or the color isnt currently playing player's color
+	if (!piece.piecePtr)	return;
+	if (piece.piecePtr->getColor() != currentPlayer)	return;
+
+	//Attempt to move, the move itself will return whether it was success
+	//or not so we dont have to double check possibility.
+	auto moved = piece.piecePtr->move(fromPos, toPos, state);
+	
+	//if first is false, the move fas failure
+	if (!moved.first)	return;
+	
+	//if the piece we moved on top of is not nullptr and its None
+	//store it in its player's graveyard
+	if (moved.second.piecePtr && moved.second.piecePtr->getType() != PieceType::None)
+		getGraveyard(moved.second.piecePtr->getColor()).push_back(moved.second);
+}
+
+void GenericBoard::_switchColor()
+{
+	currentPlayer = currentPlayer == Color::White ? Color::Black : Color::White;
+}
+
+void GenericBoard::_checkStaleOrCheckmate()
+{
+	if (_checkStalemate()) {
+		winner = Color::Pat;
+		currentPlayer = Color::None;
+	}
+	else if (_checkCheckmate()) {
+		_switchColor();
+		winner = currentPlayer;
+		currentPlayer = Color::None;
+	}
 }

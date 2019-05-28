@@ -25,7 +25,6 @@ class GenericBoard;
 */
 class PieceGeneric {
 protected:
-	bool _didMove = false;
 	Color color;			/**< Color of the piece. */
 
 	/**
@@ -39,7 +38,7 @@ protected:
 		\param state BoardState to perform this move over. Will be updated.
 		\sa isInsideBoard()
 	*/
-	virtual void moveAction(Position fromPos, Position toPos, BoardState& state);
+	virtual void moveAction(Position fromPos, Position toPos, BoardState& state) const;
 public:
 	PieceGeneric(Color c) : color(c) {}
 	virtual ~PieceGeneric() = default;
@@ -98,6 +97,8 @@ public:
 		Returns a list of all available moves for this piece with given board state.
 
 		This method has to be implemented by all classes deriving from this class.
+
+		Ignores moves that would lead to checkmate.
 		
 		\param fromPos Position to get all available moves from.
 		\param state A board state to calculate moves over.
@@ -105,6 +106,9 @@ public:
 	*/
 	virtual std::vector<Position> getAllAvailableMoves(Position fromPos, 
 													   const BoardState& state) const;
+
+	virtual std::vector<Position> getAllThreateningMoves(Position fromPos,
+														 const BoardState& state) const;
 
 	/**
 		Attempt to perform a move of this piece to new position on a board
@@ -122,11 +126,8 @@ public:
 		\sa isInsideBounds()
 		\sa moveAction()
 	*/
-	bool move(Position fromPos, Position toPos, BoardState& state);
-
-	bool didMove() const {
-		return _didMove;
-	}
+	virtual std::pair<bool, PieceStorage> move(Position fromPos,
+											   Position toPos, BoardState& state) const;
 };
 
 #endif // GENERIC_PIECE_HEADER_H_

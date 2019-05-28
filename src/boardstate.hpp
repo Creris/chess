@@ -42,6 +42,7 @@ using Position = std::pair<int8_t, int8_t>;
 enum class Color {
 	Black,
 	White,
+	Pat,
 	None,
 };
 
@@ -57,7 +58,8 @@ class PieceGeneric;
 struct PieceStorage {
 	Position startingPos = { -1, -1 };
 	std::shared_ptr<PieceGeneric> piecePtr = nullptr;
-	std::array<std::vector<decltype(piecePtr)>, 2> threat = {};
+	bool didMove = false;
+	std::array<uint8_t, 2> threat = {};
 
 	PieceStorage() {}
 	PieceStorage(Position _s,

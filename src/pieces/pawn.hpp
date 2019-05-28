@@ -31,9 +31,15 @@ public:
 	// Inherited via PieceGeneric
 	bool canMove(Position fromPos, Position toPos, const BoardState& state) const override;
 	PieceType getType() const override;
+	
 	std::vector<Position> getAllAvailableMoves(Position fromPos, const BoardState& state) const override;
+	std::vector<Position> getAllThreateningMoves(Position fromPos, const BoardState& state) const override;
+
 	std::vector<PieceType> getUpgradeOptions() const override;
-	void moveAction(Position fromPos, Position toPos, BoardState& state) override;
+	
+	void moveAction(Position fromPos, Position toPos, BoardState& state) const override;
+	std::pair<bool, PieceStorage> move(Position fromPos, Position toPos, BoardState& state) const override;
+
 };
 
 #endif // PIECE_PAWN_HEADER_H_

@@ -13,9 +13,9 @@ bool PieceKing::canMove(Position fromPos, Position toPos, const BoardState& stat
 
 	return (piece.getColor() != color || type == PieceType::None ||
 			type == PieceType::ShadowPawn)
-		&& std::abs(diff.first) < 2 && std::abs(diff.second) < 2
+		&& std::abs(diff.first) < 2 && std::abs(diff.second) < 2;
 		//Can't move towards a check
-		&& !state.squares[toPos.first][toPos.second].threat[attIdx].size();
+		//&& !state.squares[toPos.first][toPos.second].threat[attIdx];
 }
 
 PieceType PieceKing::getType() const
@@ -28,11 +28,6 @@ std::vector<Position> PieceKing::getAllAvailableMoves(Position fromPos,
 {
 	std::vector<Position> positions;
 
-	/* TODO: Make king recognize possible castling options.
-			 Will require the king to be able to get rooks of the same color
-			 and check if they moved yet and also check if he is in Check
-			 or will be after castling, and also check if he has vision of the rook.
-	*/
 	//Check around the king
 	for (int i = -1; i < 2; ++i) {
 		for (int j = -1; j < 2; ++j) {

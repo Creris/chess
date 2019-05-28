@@ -1,12 +1,14 @@
 #include "generic.hpp"
+#include "piecebuilder.hpp"
 #include "../boards/genericboard.hpp"
 
-void PieceGeneric::moveAction(Position fromPos, Position toPos, BoardState& state) {
+void PieceGeneric::moveAction(Position fromPos, Position toPos, BoardState& state) const {
 	if (!isInsideBoard(toPos, state))
 		return;
 
 	state.squares[toPos.first][toPos.second] = std::move(state.squares[fromPos.first][fromPos.second]);
 	state.squares[fromPos.first][fromPos.second] = {};
+	state.squares[fromPos.first][fromPos.second].piecePtr = newPieceByType(PieceType::None);
 }
 
 bool PieceGeneric::canMove(Position fromPos, Position toPos, const BoardState& state) const
@@ -38,13 +40,19 @@ std::vector<Position> PieceGeneric::getAllAvailableMoves(Position fromPos,
 	return {};
 }
 
-bool PieceGeneric::move(Position fromPos, Position toPos, BoardState& state) {
+std::vector<Position> PieceGeneric::getAllThreateningMoves(Position fromPos, const BoardState& state) const
+{
+	return getAllAvailableMoves(fromPos, state);
+}
+
+std::pair<bool, PieceStorage> PieceGeneric::move(Position fromPos,
+												 Position toPos, BoardState& state) const {
 	//If the move is not valid, ignore it and return empty state
 	//to make sure the caller knows this was not successful
 	if (this->canMove(fromPos, toPos, state)) {
-		_didMove = true;
+		auto target = state.squares[toPos.first][toPos.second];
 		this->moveAction(fromPos, toPos, state);
-		return true;
+		return { true, target };
 	}
-	return false;
+	return { false, {} };
 }

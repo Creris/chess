@@ -7,7 +7,7 @@
 
 class ChessBoard : public GenericBoard {
 public:
-	ChessBoard() : GenericBoard(8, 8) {}
+	ChessBoard() : GenericBoard(8, 8) { state.type = BoardType::Chess; }
 	~ChessBoard() = default;
 	ChessBoard(const ChessBoard&) = default;
 	ChessBoard(ChessBoard&&) noexcept = default;
