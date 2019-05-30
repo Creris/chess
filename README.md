@@ -8,10 +8,12 @@ Chess made in C++ as a fun side project.
   * ~~Check~~
   * ~~Checkmate~~
   * ~~Stalemate~~
-  * Castling
+  * ~~Castling~~
   * ~~En Passant~~
   * 50 move rule
   * 3-fold repetition
+
+More thorough readme comes once main functionality is implemented.
 
 ## Plans for future
 * 2D Graphics
