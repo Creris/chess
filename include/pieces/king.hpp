@@ -11,6 +11,7 @@
 #include "generic.hpp"
 
 class PieceKing : public PieceGeneric {
+	void moveAction(Position fromPos, Position toPos, BoardState& state) const override;
 public:
 	PieceKing(Color c) : PieceGeneric(c) {}
 	~PieceKing() = default;

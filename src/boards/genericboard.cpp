@@ -167,9 +167,26 @@ GenericBoard::GenericBoard(int boardWidth, int boardHeight,
 
 void GenericBoard::addPiece(Position position, PieceType type, Color color) {
 	ProfileDeclare;
+	auto oldPiece = getPiece(position);
+	if (!oldPiece || oldPiece->getType() != PieceType::None)	return;
 	auto piece = newPieceByType(type, color);
 	if (!piece)	return;
 	state.squares[position.first][position.second] = PieceStorage{ position, piece };
+}
+
+Position _convert(const std::string& str) {
+	if (str.size() != 2)				return { -1, -1 };
+	auto lower = std::tolower(str[0]);
+	if (lower < 'a' || lower > 'h')		return { -1, -1 };
+	if (str[1] < '1' || str[1] > '8')	return { -1, -1 };
+	return { str[1] - '1', lower - 'a' };
+}
+
+void GenericBoard::addPiece(const char* strPos, PieceType type, Color color)
+{
+	auto pos = _convert(strPos);
+	if (withinBounds(pos, state.width, state.height))
+		addPiece(pos, type, color);
 }
 
 BoardState& GenericBoard::getState() {
@@ -363,17 +380,12 @@ std::vector<Position> GenericBoard::getPossibleMoves(Position pieceAtPos) const
 	auto& piece = state.squares[pieceAtPos.first][pieceAtPos.second];
 	if (!piece.piecePtr)	return {};
 
-	//auto oldColor = currentPlayer;
-	//currentPlayer = piece.piecePtr->getColor();
-
 	std::vector<Position> filtered;
 
 	for (auto& pos : piece.piecePtr->getAllAvailableMoves(pieceAtPos, state)) {
 		if (_canDoMove(pieceAtPos, pos))
 			filtered.push_back(pos);
 	}
-	
-	//currentPlayer = oldColor;
 
 	return filtered;
 }

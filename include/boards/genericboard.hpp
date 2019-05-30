@@ -66,7 +66,8 @@ protected:
 		auto upgradeField = pieceColor == Color::Black ? upgradeFieldSize - 1
 			: state.height - upgradeFieldSize;
 
-		if (toPos.first >= upgradeField) {
+		if ((pieceColor == Color::White && toPos.first >= upgradeField) ||
+			(pieceColor == Color::Black && toPos.first <= upgradeField)) {
 			auto currentType = piece.piecePtr->getType();
 			auto list = piece.piecePtr->getUpgradeOptions();
 			if (!list.size())	return;
@@ -108,6 +109,7 @@ public:
 	int getAvailableMoveCount(Color color) const;
 
 	void addPiece(Position position, PieceType type, Color color);
+	virtual void addPiece(const char* strPos, PieceType type, Color color);
 
 	const BoardState& getState() const;
 	BoardState& getState();

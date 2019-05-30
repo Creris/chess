@@ -36,10 +36,20 @@ void ChessBoard::initialize()
 		addPiece({ 0, i }, typeArray[i], Color::White);
 		addPiece({ 7, i }, typeArray[i], Color::Black);
 	}
-	*/
+	//*/
 
+	addPiece("e1", PieceType::King, Color::White);
+	addPiece("e8", PieceType::King, Color::Black);
+	
+	addPiece("a1", PieceType::Rook, Color::White);
+	addPiece("h1", PieceType::Rook, Color::White);
 
-	///*
+	addPiece("a8", PieceType::Rook, Color::Black);
+	addPiece("h8", PieceType::Rook, Color::Black);
+
+	addPiece("g2", PieceType::Queen, Color::White);
+
+	/*
 	addPiece({ 1, 5 }, PieceType::King, Color::White);
 	addPiece({ 7, 0 }, PieceType::King, Color::Black);
 	addPiece({ 5, 4 }, PieceType::Rook, Color::Black);

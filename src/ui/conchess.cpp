@@ -46,7 +46,7 @@ enum class Command {
 };
 
 inline std::unordered_map<Command, std::pair<std::string, std::string>> commandHelpStrings = {
-	{ Command::Quit, std::make_pair("quit"s,
+	{ Command::Quit, std::make_pair("exit\nquit"s,
 			"Quits the chess game."s)
 	},
 	{ Command::Help, std::make_pair("help"s,

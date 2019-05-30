@@ -20,6 +20,8 @@ class PiecePawn : public PieceGeneric {
 		return (color == Color::Black && fromPos.first == 6 ||
 			color == Color::White && fromPos.first == 1);
 	};
+
+	void moveAction(Position fromPos, Position toPos, BoardState& state) const override;
 public:
 	PiecePawn(Color c) : PieceGeneric(c) {}
 	~PiecePawn() = default;
@@ -37,9 +39,7 @@ public:
 
 	std::vector<PieceType> getUpgradeOptions() const override;
 	
-	void moveAction(Position fromPos, Position toPos, BoardState& state) const override;
 	std::pair<bool, PieceStorage> move(Position fromPos, Position toPos, BoardState& state) const override;
-
 };
 
 #endif // PIECE_PAWN_HEADER_H_
