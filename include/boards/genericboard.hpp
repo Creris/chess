@@ -10,6 +10,9 @@
 
 #include "../boardstate.hpp"
 #include "../piecetype.hpp"
+#include "../pieces/piecebuilder.hpp"
+
+#include "../profiler.hpp"
 
 #include <memory>
 #include <vector>
@@ -45,7 +48,44 @@ protected:
 	virtual bool _checkStalemate() const;
 	virtual bool _checkCheckmate() const;
 
-	virtual void doUpgrade(Position fromPos, Position toPos, UpgradeCallback callback);
+	template <class UpgradeCallback>
+	void doUpgrade(Position fromPos, Position toPos, UpgradeCallback callback){
+		ProfileDeclare;
+		static_assert(std::is_invocable_r_v<PieceType, UpgradeCallback, PieceType, const std::vector<PieceType>&>,
+			"Function passed to doUpgrade "
+			"must be of signature PieceType(PieceType, const std::vector<PieceType>&)."
+		);
+
+		auto& piece = state.squares[toPos.first][toPos.second];
+		if (!piece.piecePtr)	return;
+
+		auto pieceColor = piece.piecePtr->getColor();
+		if (pieceColor != Color::White && pieceColor != Color::Black)	return;
+		if (upgradeFieldSize <= 0)	return;
+
+		auto upgradeField = pieceColor == Color::Black ? upgradeFieldSize - 1
+			: state.height - upgradeFieldSize;
+
+		if (toPos.first >= upgradeField) {
+			auto currentType = piece.piecePtr->getType();
+			auto list = piece.piecePtr->getUpgradeOptions();
+			if (!list.size())	return;
+
+			PieceType choice = PieceType::None;
+			if (list.size() != 1) {
+				do {
+					choice = callback(currentType, list);
+				} while (std::find(list.begin(), list.end(), choice) == list.end());
+			}
+			else {
+				choice = list[0];
+			}
+
+			if (choice != currentType) {
+				state.squares[toPos.first][toPos.second].piecePtr = newPieceByType(choice, pieceColor);
+			}
+		}
+	}
 
 	BoardState state;
 
@@ -95,10 +135,35 @@ public:
 	Color getPlayingColor() const;
 
 	bool tryMove(Position fromPos, Position toPos);
-	bool tryMove(Position fromPos, Position toPos, UpgradeCallback onUpgrade);
+
+	template <class UpgradeCallback>
+	bool tryMove(Position fromPos, Position toPos, UpgradeCallback onUpgrade){
+		ProfileDeclare;
+		static_assert(std::is_invocable_r_v<PieceType, UpgradeCallback, PieceType, const std::vector<PieceType>&>,
+			"Function passed to the upgrade callback version of tryMove "
+			"must be of signature PieceType(PieceType, const std::vector<PieceType>&)."
+		);
+		auto _b = tryMove(fromPos, toPos);
+		if (!_b)	return false;
+		if (winner != Color::None)	return _b;
+
+		doUpgrade(fromPos, toPos, onUpgrade);
+
+		return true;
+	}
 
 	bool tryMove(Position toPos);
-	bool tryMove(Position toPos, UpgradeCallback onUpgrade);
+
+	template <class UpgradeCallback>
+	bool tryMove(Position toPos, UpgradeCallback&& onUpgrade) {
+		ProfileDeclare;
+		static_assert(std::is_invocable_r_v<PieceType, UpgradeCallback, PieceType, const std::vector<PieceType>&>,
+			"Function passed to the upgrade callback version of tryMove "
+			"must be of signature PieceType(PieceType, const std::vector<PieceType>&)."
+		);
+		return tryMove(selected, toPos, onUpgrade);
+
+	}
 
 	std::vector<Position> getPossibleMoves() const;
 	std::vector<Position> getPossibleMoves(Position pieceAtPos) const;

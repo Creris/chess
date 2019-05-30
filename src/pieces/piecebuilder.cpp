@@ -8,8 +8,12 @@
 #include "../../include/pieces/rook.hpp"
 #include "../../include/pieces/shadowpawn.hpp"
 
+#include "../../include/profiler.hpp"
+
+
 std::shared_ptr<PieceGeneric> newPieceByType(PieceType type, Color c)
 {
+	ProfileDeclare;
 	auto _builder = [](PieceType type, Color c) -> std::shared_ptr<PieceGeneric> {
 		switch (type) {
 		case PieceType::Bishop:

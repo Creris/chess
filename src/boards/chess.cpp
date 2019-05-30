@@ -2,17 +2,18 @@
 #include "../../include/boards/chess.hpp"
 #include "../../include/pieces/generic.hpp"
 
+#include "../../include/profiler.hpp"
+
 void ChessBoard::initialize()
 {
-	//If the state is not exactly correct, reinitialize
-	if (state.width != state.height && state.width != 8) {
-		auto vec = std::vector<PieceStorage>{};
-		vec.resize(8);
-		state.squares.resize(8, vec);
-		state.width = state.height = 8;
-		_convertNulls();
-	}
+	ProfileDeclare;
+	state.squares.clear();
 
+	auto vec = std::vector<PieceStorage>{};
+	vec.resize(8);
+	state.squares.resize(8, vec);
+	state.width = state.height = 8;
+	_convertNulls();
 
 	std::array<PieceType, 8> typeArray = {
 		PieceType::Rook,
@@ -39,11 +40,12 @@ void ChessBoard::initialize()
 
 
 	///*
-	addPiece({ 1, 4 }, PieceType::King, Color::White);
+	addPiece({ 1, 5 }, PieceType::King, Color::White);
 	addPiece({ 7, 0 }, PieceType::King, Color::Black);
 	addPiece({ 5, 4 }, PieceType::Rook, Color::Black);
 	addPiece({ 3, 2 }, PieceType::Bishop, Color::Black);
 	addPiece({ 2, 3 }, PieceType::Queen, Color::White);
+	addPiece({ 6, 2 }, PieceType::Pawn, Color::White);
 	//*/
 
 	/*

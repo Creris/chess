@@ -5,10 +5,13 @@
 #include <iostream>
 #include <string_view>
 #include <unordered_map>
+#include <iomanip>
 
 #include "../../include/pieces/generic.hpp"
 #include "../../include/profiler.hpp"
 #include "../../include/stringutil.hpp"
+
+#include "../../include/profiler.hpp"
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
@@ -20,6 +23,7 @@ std::shared_ptr<GenericBoard>& getChessBoard()
 
 void ConsoleChess::initialize()
 {
+	ProfileDeclare;
 	board->initialize();
 }
 
@@ -49,14 +53,14 @@ inline std::unordered_map<Command, std::pair<std::string, std::string>> commandH
 			"Prints this help message."s)
 	},
 	{ Command::Commands, std::make_pair("commands"s,
-			"Prints list of available commands with no\n"s +
+			"Prints list of available commands with no\n"s
 			" additional information."s)
 	},
 	{ Command::Select, std::make_pair("select POSITION"s,
-			"Selects a piece at this position to \n"s +
-			"use actions with.\n"s +
-			"Can only select a piece owner by the player\n"s +
-			"that is currently playing.\n"s + 
+			"Selects a piece at this position to \n"s
+			"use actions with.\n"s
+			"Can only select a piece owner by the player\n"s
+			"that is currently playing.\n"s
 			"Valid Positions: [a..h/A..H][1..8].")
 	},
 
@@ -64,42 +68,51 @@ inline std::unordered_map<Command, std::pair<std::string, std::string>> commandH
 			"Unselects a piece if any was selected."s)
 	},
 	{ Command::Info, std::make_pair("info POSITION"s,
-			"Displays information about a piece on given position.\n"s +
-			"use actions with.\n"s +
-			"Can only select a piece owner by the player\n"s +
+			"Displays information about a piece on given position.\n"s
+			"use actions with.\n"s
+			"Can only select a piece owner by the player\n"s
 			"that is currently playing.")
 	},
 	{ Command::Restart, std::make_pair("restart"s,
-			"Restarts the chess game moving all pieces\n"s +
+			"Restarts the chess game moving all pieces\n"s
 			"to their initial positions."s)
 	},
 	{ Command::Forfeit,	std::make_pair("forfeit"s,
-			"Forfeits the match, in case the player is checked.\n"s +
+			"Forfeits the match, in case the player is checked.\n"s
 			"Concludes the winner of the match the opposing player."s)
 	},
-	{ Command::Move, std::make_pair("move [From] To"s,
-			"Perform a move from position From into position To.\n"s +
-			"If only one coordinate is provided, attempts to move the\n"s +
-			"selected piece.\n"s +
-			"If both coordinates are provided, has same effect as\n"s +
+	{ Command::Move, std::make_pair("move To\nmove From To"s,
+			"Perform a move from position From into position To.\n"s
+			"If only one coordinate is provided, attempts to move the\n"s
+			"selected piece.\n"s
+			"If both coordinates are provided, has same effect as\n"s
 			"select From, move To.")
 	},
-	{ Command::Turn, std::make_pair("turn (V [U]) | reset"s,
-			"Selects a piece at this position to \n"s +
-			"use actions with.\n"s +
-			"Can only select a piece owner by the player\n"s +
-			"that is currently playing."s)
+	{ Command::Turn, std::make_pair("turn V\nturn V U\nturn reset"s,
+			"Displays information about turn number V.\n"
+			"If U is also provided, displays turns from turn V until turn U.\n"
+			"turn reset resets the turn display information to default."s)
 	},
 	{ Command::Grid, std::make_pair("grid N"s,
-			"Sets the grid size for the chess. Available values:"s + "\n"s +
+			"Sets the grid size for the chess. Available values:\n"s
 			"1, 2, 4, 8(default)."s)
 	},
 	{ Command::Render, std::make_pair("render"s,
 			"Renders the chess board."s)
+	},
+	{ Command::Profile, std::make_pair("profile off\nprofile [on] file\n"s
+									   "profile [on] file verbose\nprofile [on] file traceback\n"s
+									   "profile [on] file total"s,
+			"Turns profiling of the program on or off.\n"s
+			"Profiling puts the execution time of every"s "\n"s
+			"function into a file.\n"s
+			"If verbose is provided, will also include stack trace.\n"s
+			"Note that total profiling uses a lot of disk space.")
 	}
 };
 
 inline auto cmdToIdx = [](std::string_view input) {
+	ProfileDeclare;
 	static std::unordered_map<std::string_view, Command> map = {
 		{ "quit", Command::Quit },
 		{ "exit", Command::Quit },
@@ -114,6 +127,7 @@ inline auto cmdToIdx = [](std::string_view input) {
 		{ "turn", Command::Turn },
 		{ "grid", Command::Grid },
 		{ "render", Command::Render },
+		{ "profile", Command::Profile },
 	};
 
 	if (!map.contains(input))	return Command::Invalid;
@@ -121,6 +135,7 @@ inline auto cmdToIdx = [](std::string_view input) {
 };
 
 inline std::string getHelpForCommand(std::string_view commandInput) {
+	ProfileDeclare;
 	auto split_ = split(commandInput, " \t");
 	if (split_.size() != 1) {
 		std::string msg;
@@ -146,6 +161,7 @@ inline std::string getHelpForCommand(std::string_view commandInput) {
 
 void ConsoleChess::help() const
 {
+	ProfileDeclare;
 	std::vector<std::string> helps;
 
 	for (auto& v : commandHelpStrings) {
@@ -153,6 +169,7 @@ void ConsoleChess::help() const
 	}
 
 	std::sort(helps.begin(), helps.end(), [](const auto& v1, const auto& v2) {
+		ProfileDeclare;
 		return v1 < v2;
 	});
 
@@ -166,6 +183,7 @@ void ConsoleChess::help() const
 }
 void ConsoleChess::help(const std::string& command) const
 {
+	ProfileDeclare;
 	if (command == "") {
 		help();
 		return;
@@ -183,6 +201,7 @@ void ConsoleChess::help(const std::string& command) const
 }
 
 std::string getListOfCommands() {
+	ProfileDeclare;
 	std::vector<std::pair<std::string, std::string>> helps;
 
 	size_t maxLength = 0;
@@ -216,6 +235,7 @@ std::string getListOfCommands() {
 }
 
 void listCommands() {
+	ProfileDeclare;
 	std::cout << "List of commands:\n";
 	std::cout << "  Command - Arguments\n";
 	std::cout << "  " << join(split(getListOfCommands(), "\n"), "\n  ") << "\n\n";
@@ -225,29 +245,34 @@ using CommandHandler = bool(*)(const std::vector<std::string_view>& args);
 
 namespace actions {
 	bool help(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		ConsoleChess::getInstance().help(join(args, " "));
 		return false;
 	}
 	
 	bool _internalHelp(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		std::cout << "Invalid arguments for command " << args[0] << ".\n";
 		ConsoleChess::getInstance().help(join(args, ""));
-		return false;
+		return true;
 	}
 
 	bool commands(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		if (args.size())	return _internalHelp({ "commands" });
 		listCommands();
 		return false;
 	}
 
 	bool quit(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		if (args.size())	return _internalHelp({ "quit" });
 		std::cout << "Quiting chess.\n";
 		exit(0);
 	}
 
 	bool grid(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		if (args.size() != 1)	return _internalHelp({ "grid" });
 		int size = -1;
 		try {
@@ -258,7 +283,7 @@ namespace actions {
 			return _internalHelp({ "grid" });
 		} catch (...) {
 			std::cout << "Unexpected exception while handling grid rescaling.\n\n";
-			return false;
+			exit(0);
 		}
 		if (!ConsoleChess::getInstance().grid(size))
 			return _internalHelp({ "grid" });
@@ -267,6 +292,7 @@ namespace actions {
 	}
 
 	bool render(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		if (args.size())	return _internalHelp({ "render" });
 		ConsoleChess::getInstance().render();
 		std::cout << "\n";
@@ -274,17 +300,20 @@ namespace actions {
 	}
 
 	bool turn(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		throw std::exception("Unimplemented");
-		return false;
+		return true;
 	}
 
 	bool restart(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		if (args.size())	return _internalHelp({ "restart" });
 		ConsoleChess::getInstance().initialize();
 		return true;
 	}
 
 	bool select(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		if (args.size() != 1) {
 			return _internalHelp({ "select" });
 		}
@@ -310,13 +339,13 @@ namespace actions {
 				std::cout << " Unknown reason.\n";
 			}
 			std::cout << "\n";
-			return false;
 		}
 
 		return true;
 	}
 
 	bool unselect(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		if (args.size())	return _internalHelp({ "unselect" });
 		getChessBoard()->unselect();
 		return true;
@@ -357,6 +386,7 @@ namespace actions {
 	};
 
 	static auto pieceToName = [](PieceType type, Color c) {
+		ProfileDeclare;
 		auto typeName = typeToName(type);
 		auto colorName = colorToName(c);
 
@@ -366,7 +396,9 @@ namespace actions {
 		return typeName;
 	};
 
-	std::vector<Position> _getSelfCheckPositions(Position atPosition) {
+	std::vector<Position> _getSelfCheckPositions(Position atPosition,
+												 const std::vector<Position>& valid) {
+		ProfileDeclare;
 		auto& board = getChessBoard();
 		auto storage = board->getPieceStorage(atPosition);
 		if (!storage.piecePtr)	return {};
@@ -375,23 +407,29 @@ namespace actions {
 			return {};
 
 		auto allMoves = storage.piecePtr->getAllAvailableMoves(atPosition, board->getState());
+		allMoves.erase(std::remove_if(allMoves.begin(), allMoves.end(), [&](const Position& p) {
+			return std::find(valid.begin(), valid.end(), p) != valid.end();
+		}), allMoves.end());
+
+		return allMoves;
+		/*
 		auto allFiltered = board->getPossibleMoves(atPosition);
 
-		auto selfChecking = allMoves;
-		selfChecking.erase(std::remove_if(selfChecking.begin(), selfChecking.end(), [&](const Position& p) {
+		valid.erase(std::remove_if(valid.begin(), valid.end(), [&](const Position& p) {
 			return std::find(allFiltered.begin(), allFiltered.end(), p) != allFiltered.end();
-		}), selfChecking.end());
+		}), valid.end());
 
-		return selfChecking;
+		return valid;*/
 	}
 
 	void _printPossibleMoves(Position pos) {
+		ProfileDeclare;
 		if (pos.first == -1 || pos.second == -1)	return;
 		auto& board = getChessBoard();
 		auto piece = board->getPieceStorage(pos);
 
-		auto invalid = _getSelfCheckPositions(pos);
 		auto valid = board->getPossibleMoves(pos);
+		auto invalid = _getSelfCheckPositions(pos, valid);
 
 		static auto _cleanBack = [](std::string& s) {
 			if (s.size() >= 2 && s.ends_with(", ")) {
@@ -454,6 +492,7 @@ namespace actions {
 	}
 
 	bool info(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		if (args.size() != 1)	return _internalHelp({ "info" });
 		Position pos = stringToPosition(args[0]);
 		if (pos.first == -1 || pos.second == -1)	return _internalHelp({ "info" });
@@ -468,7 +507,7 @@ namespace actions {
 		auto colorName = colorToName(color);
 		auto typeName = pieceToName(type, color);
 
-		const char* words[] = { "piece", "pieces" };
+		const char* words[] = { "piece is", "pieces are" };
 		int whiteAttacking = static_cast<int>(storage.threat[0]);
 		int blackAttacking = static_cast<int>(storage.threat[1]);
 
@@ -483,24 +522,28 @@ namespace actions {
 		}
 
 		std::cout << "  Threats:    " << whiteAttacking << " White " 
-										<< words[whiteAttacking != 1] << " can move to this square.\n";
+										<< words[whiteAttacking != 1] << " attacking this square.\n";
 		std::cout << "              " << blackAttacking << " Black "
-										<< words[blackAttacking != 1] << " can move to this square.\n";
+										<< words[blackAttacking != 1] << " attacking this square.\n";
 
 		std::cout << "\n";
-		return false;
+
+		return true;
 	}
 
 	bool forfeit(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		if (args.size())	return _internalHelp({ "forfeit" });
 		std::cout << "Player " << colorToName(getChessBoard()->getPlayingColor()) << " forfeits!\n";
 		do {
-			std::cout << "Play again(P) or Quit(Q): ";
+			std::cout << "(R) Restart\n";
+			std::cout << "(Q) Quit\n";
+			std::cout << "Choice: ";
 			std::string input;
 			std::getline(std::cin, input);
 			std::cout << "\n";
 			if (input.size() > 1)	continue;
-			if (std::tolower(input[0]) == 'p') {
+			if (std::tolower(input[0]) == 'r') {
 				return restart({});
 			}
 			else if (std::tolower(input[0]) == 'q') {
@@ -511,12 +554,75 @@ namespace actions {
 	}
 
 	bool _moveSelected(std::string_view to) {
+		ProfileDeclare;
+		auto selected = getChessBoard()->getSelectedPosition();
+		if (selected.first == -1 || selected.second == -1)
+			return _internalHelp({ "move" });
+
 		Position pos = stringToPosition(to);
 		if (pos.first == -1 || pos.second == -1) {
 			std::cout << "Invalid move position " << to << "\n\n";
 			return false;
 		}
-		if (!getChessBoard()->tryMove(pos)) {
+
+		static auto promotion = [](PieceType orig, const std::vector<PieceType>& choices) {
+			ProfileDeclare;
+			std::string origName = split(typeToName(orig), " ")[0];
+			std::vector<std::string> choiceNames;
+			size_t maxLen = 0;
+			for (auto& p : choices) {
+				choiceNames.emplace_back(split(typeToName(p), " ")[0]);
+				maxLen = std::max(maxLen, choiceNames.back().size());
+			}
+
+			static auto charToType = [](char c) {
+				switch (std::tolower(c)) {
+					case 'p':
+						return PieceType::Pawn;
+					case 'b':
+						return PieceType::Bishop;
+					case 'k':
+						return PieceType::King;
+					case 'n':
+						return PieceType::Knight;
+					case 'q':
+						return PieceType::Queen;
+					case 'r':
+						return PieceType::Rook;
+					default:
+						return PieceType::None;
+				}
+			};
+
+			std::cout << "Promoting " << origName << ". ";
+			PieceType selected = PieceType::None;
+
+			do {
+				std::cout << "Select from following:\n";
+				for (size_t i = 0; i < choices.size(); ++i) {
+					std::cout << std::setw(maxLen) << choiceNames[i];
+					if (choiceNames[i] == "Knight") {
+						choiceNames[i][0] = 'N';
+						std::cout << " (" << choiceNames[i][0] << ")\n";
+						choiceNames[i][0] = 'K';
+					}
+					else {
+						std::cout << " (" << choiceNames[i][0] << ")\n";
+					}
+				}
+				std::cout << "Choice: ";
+				std::string choice;
+				std::getline(std::cin, choice);
+				std::cin.ignore(-1);
+
+				if (choice.size() != 1)	continue;
+				selected = charToType(choice[0]);
+			} while (std::find(choices.begin(), choices.end(), selected) == choices.end());
+
+			return selected;
+		};
+
+		if (!getChessBoard()->tryMove(pos, promotion)) {
 			std::cout << "This move cannot be performed. Try again.\n\n";
 			return false;
 		}
@@ -525,6 +631,7 @@ namespace actions {
 	}
 
 	bool _moveSelect(std::string_view from, std::string_view to) {
+		ProfileDeclare;
 		Position fromPos = stringToPosition(from);
 		if (fromPos.first == -1 || fromPos.second == -1) {
 			std::cout << "Invalid starting position " << from << "\n\n";
@@ -535,17 +642,53 @@ namespace actions {
 	}
 
 	bool move(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		if (args.size() == 1)		return _moveSelected(args[0]);
 		else if (args.size() == 2)	return _moveSelect(args[0], args[1]);
 		else						return _internalHelp({ "move" });
 	}
 
 	bool profile(const std::vector<std::string_view>& args) {
+		ProfileDeclare;
 		auto size = args.size();
 		if (!size || (size == 1 && args[0] == "off")) {
-			
+			auto oldFile = Profiler::target();
+			Profiler::target("");
+			if (oldFile.size()) {
+				std::cout << "Wrote collected metrics into " << oldFile << "\n";
+			}
+
+			return true;
 		}
-		return false;
+		else if (size > 0 && args[0] != "off") {
+			auto rest = std::vector<std::string_view>{ args.begin(), args.end() };
+			if (args[0] == "on")	rest.erase(rest.begin());
+			if (rest.size() > 2) {
+				return _internalHelp({ "profile" });
+			}
+			
+			if (rest.size() > 1) {
+				auto back = rest.back();
+				if (back == "verbose") {
+					Profiler::traceback(0);
+					Profiler::verbosity(1);
+				}
+				else if (back == "traceback") {
+					Profiler::traceback(1);
+					Profiler::verbosity(0);
+				}
+				else if (back == "total") {
+					Profiler::traceback(1);
+					Profiler::verbosity(1);
+				}
+				else return _internalHelp({ "profile" });
+			}
+
+			Profiler::target(std::string{ rest[0] });
+			return true;
+		}
+
+		return _internalHelp({ "profile" });
 	}
 }
 
@@ -566,6 +709,7 @@ std::unordered_map<Command, CommandHandler> commandHandlers = {
 };
 
 inline bool handleCommand(std::string_view cmd, const std::vector<std::string_view>& args) {
+	ProfileDeclare;
 	auto cmdV = cmdToIdx(cmd);
 	if (cmdV == Command::Invalid) {
 		ConsoleChess::getInstance().help();
@@ -576,6 +720,7 @@ inline bool handleCommand(std::string_view cmd, const std::vector<std::string_vi
 
 bool ConsoleChess::promptInput()
 {
+	ProfileDeclare;
 	std::string userInput;
 	std::cout << "User input: ";
 	std::getline(std::cin, userInput);
@@ -614,6 +759,7 @@ ConsoleChess& ConsoleChess::getInstance()
 
 void ConsoleChess::render() const
 {
+	ProfileDeclare;
 	static auto outputChar = [](PieceType type) {
 		switch (type) {
 			case PieceType::King:
@@ -634,8 +780,10 @@ void ConsoleChess::render() const
 		return ' ';
 	};
 
-	static auto _generateEmpty = [](const auto& board, const std::array<std::string, 9>& grid,
+	static auto _generateEmpty = [](const auto& board, 
+									const std::array<std::string, 9>& grid,
 									int gridSize) {
+		ProfileDeclare;
 		std::string out = "  A   B   C   D   E   F   G   H  \n";
 		for (int i = board.size() - 1; i >= 0; --i) {
 			if ((i % gridSize) == (gridSize - 1))
@@ -659,15 +807,16 @@ void ConsoleChess::render() const
 	};
 
 	static auto printBoard = [&](const auto& board, int gridSize = 2) {
+		ProfileDeclare;
 		if (gridSize < 1 || gridSize > 8)
 			return;
 
 		static std::array<std::string, 9> grid = {
 			""s,
-			"+   |   |   |   |   |   |   |   +"s,
-			"+       |       |       |       +"s,
+			"+   +   +   +   +   +   +   +   +"s,
+			"+       +       +       +       +"s,
 			""s,
-			"+               |               +"s,
+			"+               +               +"s,
 			""s,
 			""s,
 			""s,
@@ -675,7 +824,6 @@ void ConsoleChess::render() const
 		};
 
 		std::cout << "\n";
-		//std::cout << "    A   B   C   D   E   F   G   H  \n";
 
 		auto selected = getChessBoard()->getSelectedPosition();
 		std::string output = _generateEmpty(board, grid, gridSize);
@@ -686,6 +834,7 @@ void ConsoleChess::render() const
 		int counter = 8;
 		for (size_t i = 2; i < arrOut.size() - 1; i += 2) {
 			arrOut[i][1] = '0' + counter;
+			arrOut[i] += " "s + std::to_string(counter);
 			--counter;
 		}
 
@@ -708,17 +857,22 @@ void ConsoleChess::render() const
 			}
 		}
 
+
 		if (selected.first != -1 || selected.second != -1) {
 			auto selPos = computePosition(selected);
+			arrOut[arrOut.size() - 1 - selPos.first - 1][selPos.second] = 'v';
 			arrOut[arrOut.size() - 1 - selPos.first][selPos.second - 1] = '>';
 			arrOut[arrOut.size() - 1 - selPos.first][selPos.second + 1] = '<';
+			arrOut[arrOut.size() - 1 - selPos.first + 1][selPos.second] = '^';
 
 			for (auto& move : realBoard->getPossibleMoves()) {
 				auto movePos = computePosition(move);
 				auto& chr = arrOut[arrOut.size() - 1 - movePos.first][movePos.second];
 				if (chr != ' ') {
-					arrOut[arrOut.size() - 1 - movePos.first][movePos.second + 1] = '!';
+					arrOut[arrOut.size() - 1 - movePos.first - 1][movePos.second] = '~';
 					arrOut[arrOut.size() - 1 - movePos.first][movePos.second - 1] = '!';
+					arrOut[arrOut.size() - 1 - movePos.first][movePos.second + 1] = '!';
+					arrOut[arrOut.size() - 1 - movePos.first + 1][movePos.second] = '~';
 				}
 				else {
 					arrOut[arrOut.size() - 1 - movePos.first][movePos.second] = '*';
@@ -726,9 +880,10 @@ void ConsoleChess::render() const
 			}
 		}
 		
-		std::cout << "Current move: " << 0 << ", Playing: "
+		std::cout << "Move: " << 0 << ", Turn: "
 					<< actions::colorToName(realBoard->getPlayingColor()) << "\n\n";
-		std::cout << join(arrOut, "\n") << "\n";
+		printf("%s\n", join(arrOut, "\n").c_str());
+		//std::cout << join(arrOut, "\n") << "\n";
 	};
 
 	auto& boardState = board->getState();

@@ -1,6 +1,8 @@
 #include "../../include/boards/genericboard.hpp"
 #include "../../include/pieces/piecebuilder.hpp"
 
+#include "../../include/profiler.hpp"
+
 inline Position _findPawnFromShadow(const BoardState& state, Position shadowPos) {
 	if (shadowPos.first == 5)
 		return { shadowPos.first - 1, shadowPos.second };
@@ -10,6 +12,7 @@ inline Position _findPawnFromShadow(const BoardState& state, Position shadowPos)
 }
 
 inline PieceStorage _captureShadowPawn(BoardState& state, Position shadowPos) {
+	ProfileDeclare;
 	auto pawnPosition = _findPawnFromShadow(state, shadowPos);
 	if (pawnPosition.first == -1 || pawnPosition.second == -1)	return {};
 
@@ -30,11 +33,13 @@ inline bool withinBounds(Position pos, int width, int height) {
 
 void GenericBoard::_clearThreat()
 {
+	ProfileDeclare;
 	_clearThreat(state);
 }
 
 void GenericBoard::_clearThreat(BoardState& state) const
 {
+	ProfileDeclare;
 	for (auto& row : state.squares)
 		for (auto& cell : row) {
 			cell.threat.fill({});
@@ -43,11 +48,13 @@ void GenericBoard::_clearThreat(BoardState& state) const
 
 void GenericBoard::_convertNulls()
 {
+	ProfileDeclare;
 	_convertNulls(state);
 }
 
 void GenericBoard::_convertNulls(BoardState& state) const
 {
+	ProfileDeclare;
 	for (auto& row : state.squares) {
 		for (auto& piece : row) {
 			if (!piece.piecePtr)	piece.piecePtr = newPieceByType(PieceType::None);
@@ -57,6 +64,7 @@ void GenericBoard::_convertNulls(BoardState& state) const
 
 bool GenericBoard::_isChecked(PieceStorage storage) const
 {
+	ProfileDeclare;
 	auto& piece = storage.piecePtr;
 	if (!piece)	return false;
 	static auto colorIndex = [](Color c) { return c == Color::White ? 0 : 1; };
@@ -65,8 +73,9 @@ bool GenericBoard::_isChecked(PieceStorage storage) const
 
 void GenericBoard::_removeShadows(Color ofColor)
 {
-	for (int rank = 0; rank < state.squares.size(); ++rank) {
-		for (int file = 0; file < state.squares[rank].size(); ++file) {
+	ProfileDeclare;
+	for (size_t rank = 0; rank < state.squares.size(); ++rank) {
+		for (size_t file = 0; file < state.squares[rank].size(); ++file) {
 			auto& piece = state.squares[rank][file].piecePtr;
 			if (!piece)	continue;
 			if (!(piece->getType() == PieceType::ShadowPawn && piece->getColor() == ofColor))	continue;
@@ -78,63 +87,40 @@ void GenericBoard::_removeShadows(Color ofColor)
 
 bool GenericBoard::_checkStalemate() const
 {
+	ProfileDeclare;
 	return (!getAvailableMoveCount() && !_isChecked(getKing()));
 }
 
 bool GenericBoard::_checkCheckmate() const
 {
+	ProfileDeclare;
 	return (!getAvailableMoveCount() && _isChecked(getKing()));
 	
 }
 
-void GenericBoard::doUpgrade(Position fromPos, Position toPos, UpgradeCallback callback)
-{
-	auto& piece = state.squares[toPos.first][toPos.second];
-	if (!piece.piecePtr)	return;
-
-	auto pieceColor = piece.piecePtr->getColor();
-	if (pieceColor != Color::White && pieceColor != Color::Black)	return;
-	if (upgradeFieldSize <= 0)	return;
-
-	auto upgradeField = pieceColor == Color::Black ? upgradeFieldSize - 1
-		: state.height - upgradeFieldSize;
-
-	if (toPos.first >= upgradeField) {
-		auto currentType = piece.piecePtr->getType();
-		auto list = piece.piecePtr->getUpgradeOptions();
-		if (!list.size())	return;
-
-		PieceType choice = PieceType::None;
-		do {
-			choice = callback(currentType, list);
-		} while (std::find(list.begin(), list.end(), choice) == list.end());
-
-		if (choice != currentType) {
-			state.squares[toPos.first][toPos.second].piecePtr = newPieceByType(choice, pieceColor);
-		}
-	}
-
-}
-
 PieceStorage GenericBoard::getKing() const
 {
+	ProfileDeclare;
 	return getKing(state, getPlayingColor());
 }
 
 PieceStorage GenericBoard::getKing(Color color) const
 {
+	ProfileDeclare;
 	return getKing(state, color);
 }
 
 PieceStorage GenericBoard::getKing(const BoardState& state) const
 {
+	ProfileDeclare;
 	return getKing(state, getPlayingColor());
 }
 
 PieceStorage GenericBoard::getKing(const BoardState& state, Color color) const
 {
-	for (int rank = 0; rank < state.squares.size(); ++rank) {
-		for (int file = 0; file < state.squares[rank].size(); ++file) {
+	ProfileDeclare;
+	for (size_t rank = 0; rank < state.squares.size(); ++rank) {
+		for (size_t file = 0; file < state.squares[rank].size(); ++file) {
 			auto& piece = state.squares[rank][file].piecePtr;
 			if (!piece)	continue;
 			if (piece->getType() == PieceType::King && piece->getColor() == color)
@@ -147,11 +133,13 @@ PieceStorage GenericBoard::getKing(const BoardState& state, Color color) const
 
 int GenericBoard::getAvailableMoveCount() const
 {
+	ProfileDeclare;
 	return getAvailableMoveCount(getPlayingColor());
 }
 
 int GenericBoard::getAvailableMoveCount(Color color) const
 {
+	ProfileDeclare;
 	int counter = 0;
 	for (size_t rank = 0; rank < state.squares.size(); ++rank) {
 		for (size_t file = 0; file < state.squares[rank].size(); ++file) {
@@ -170,6 +158,7 @@ GenericBoard::GenericBoard(int boardWidth, int boardHeight,
 													BoardType::None, {} },
 												upgradeFieldSize(upgradeSize)
 {
+	ProfileDeclare;
 	auto vec = std::vector<PieceStorage>{};
 	vec.resize(boardWidth);
 	state.squares.resize(boardHeight, vec);
@@ -177,6 +166,7 @@ GenericBoard::GenericBoard(int boardWidth, int boardHeight,
 }
 
 void GenericBoard::addPiece(Position position, PieceType type, Color color) {
+	ProfileDeclare;
 	auto piece = newPieceByType(type, color);
 	if (!piece)	return;
 	state.squares[position.first][position.second] = PieceStorage{ position, piece };
@@ -192,6 +182,7 @@ const BoardState& GenericBoard::getState() const {
 
 void GenericBoard::initialize(const BoardState& state)
 {
+	ProfileDeclare;
 	if (state.width == this->state.width && state.height == this->state.height)
 		this->state = state;
 
@@ -204,6 +195,7 @@ void GenericBoard::initialize(const BoardState& state)
 
 void GenericBoard::initialize()
 {
+	ProfileDeclare;
 	blackGrave.clear();
 	whiteGrave.clear();
 	selected = { -1, -1 };
@@ -216,11 +208,13 @@ void GenericBoard::initialize()
 
 void GenericBoard::recalculateThreat()
 {
+	ProfileDeclare;
 	recalculateThreat(state);
 }
 
 void GenericBoard::recalculateThreat(BoardState& state) const
 {
+	ProfileDeclare;
 	_clearThreat(state);
 	auto cToIdx = [](Color c) {
 		return c == Color::White ? 0 : 1;
@@ -231,6 +225,9 @@ void GenericBoard::recalculateThreat(BoardState& state) const
 			auto& piece = state.squares[rank][file].piecePtr;
 			if (!piece)	continue;
 			auto type = piece->getType();
+			if (type == PieceType::None || type == PieceType::ShadowPawn)
+				continue;
+
 			for (auto& p : piece->getAllThreateningMoves({ 
 														static_cast<int>(rank), 
 														static_cast<int>(file)
@@ -254,6 +251,7 @@ std::vector<PieceStorage>& GenericBoard::getGraveyard(Color forColor)
 
 bool GenericBoard::select(Position atPosition)
 {
+	ProfileDeclare;
 	if (winner != Color::None)	return false;
 
 	if (!withinBounds(atPosition, state.width, state.height))
@@ -322,6 +320,7 @@ Color GenericBoard::getPlayingColor() const
 
 bool GenericBoard::tryMove(Position fromPos, Position toPos)
 {
+	ProfileDeclare;
 	if (winner != Color::None)	return false;
 
 	if (!withinBounds(fromPos, state.width, state.height) || 
@@ -336,7 +335,6 @@ bool GenericBoard::tryMove(Position fromPos, Position toPos)
 		_performMove(fromPos, toPos);
 		_switchColor();
 		_removeShadows(currentPlayer);
-		_convertNulls();
 		recalculateThreat();
 		_checkStaleOrCheckmate();
 		selected.didMove = true;
@@ -346,25 +344,9 @@ bool GenericBoard::tryMove(Position fromPos, Position toPos)
 	return false;
 }
 
-bool GenericBoard::tryMove(Position fromPos, Position toPos, UpgradeCallback onUpgrade)
-{
-	auto _b = tryMove(fromPos, toPos);
-	if (!_b)	return false;
-	if (winner != Color::None)	return _b;
-
-	doUpgrade(fromPos, toPos, onUpgrade);
-
-	return true;
-}
-
 bool GenericBoard::tryMove(Position toPos)
 {
 	return tryMove(selected, toPos);
-}
-
-bool GenericBoard::tryMove(Position toPos, UpgradeCallback onUpgrade)
-{
-	return tryMove(selected, toPos, onUpgrade);
 }
 
 std::vector<Position> GenericBoard::getPossibleMoves() const
@@ -374,11 +356,15 @@ std::vector<Position> GenericBoard::getPossibleMoves() const
 
 std::vector<Position> GenericBoard::getPossibleMoves(Position pieceAtPos) const
 {
+	ProfileDeclare;
 	if (!withinBounds(pieceAtPos, state.width, state.height))
 		return {};
 	
 	auto& piece = state.squares[pieceAtPos.first][pieceAtPos.second];
 	if (!piece.piecePtr)	return {};
+
+	//auto oldColor = currentPlayer;
+	//currentPlayer = piece.piecePtr->getColor();
 
 	std::vector<Position> filtered;
 
@@ -386,6 +372,8 @@ std::vector<Position> GenericBoard::getPossibleMoves(Position pieceAtPos) const
 		if (_canDoMove(pieceAtPos, pos))
 			filtered.push_back(pos);
 	}
+	
+	//currentPlayer = oldColor;
 
 	return filtered;
 }
@@ -403,20 +391,23 @@ void GenericBoard::forfeit()
 
 bool GenericBoard::_canDoMove(Position fromPos, Position toPos) const
 {
+	ProfileDeclare;
 	if (!withinBounds(fromPos, state.width, state.height) ||
 			!withinBounds(toPos, state.width, state.height))
 		return false;
 
 	auto fakeState = state;
 	auto& piece = fakeState.squares[fromPos.first][fromPos.second];
+	auto thisPlayer = piece.piecePtr->getColor();
+	auto enemyPlayer = thisPlayer == Color::White ? 1 : 0;
+
 	if (!piece.piecePtr)	return false;
 	auto moved = piece.piecePtr->move(fromPos, toPos, fakeState);
 	if (!moved.first)	return false;
 
-	auto enemyPlayer = currentPlayer == Color::White ? 1 : 0;
 
 	recalculateThreat(fakeState);
-	if (getKing(fakeState).threat[enemyPlayer])
+	if (getKing(fakeState, thisPlayer).threat[enemyPlayer])
 		return false;
 
 	return true;
@@ -424,6 +415,7 @@ bool GenericBoard::_canDoMove(Position fromPos, Position toPos) const
 
 void GenericBoard::_performMove(Position fromPos, Position toPos)
 {
+	ProfileDeclare;
 	if (!withinBounds(fromPos, state.width, state.height) ||
 			!withinBounds(toPos, state.width, state.height))
 		return;
@@ -455,6 +447,7 @@ void GenericBoard::_switchColor()
 
 void GenericBoard::_checkStaleOrCheckmate()
 {
+	ProfileDeclare;
 	if (_checkStalemate()) {
 		winner = Color::Pat;
 		currentPlayer = Color::None;

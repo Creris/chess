@@ -3,6 +3,8 @@
 #include "../../include/boards/chess.hpp"
 #include "../../include/boards/genericboard.hpp"
 
+#include "../../include/profiler.hpp"
+
 template <class T>
 std::shared_ptr<GenericBoard> _getBoard() {
 	static std::shared_ptr<T> board = std::make_shared<T>();
@@ -11,6 +13,7 @@ std::shared_ptr<GenericBoard> _getBoard() {
 
 std::shared_ptr<GenericBoard> getBoard(BoardType type)
 {
+	ProfileDeclare;
 	switch (type) {
 	case BoardType::Chess:
 		return _getBoard<ChessBoard>();
