@@ -49,14 +49,14 @@ bool PieceKing::canMove(Position fromPos, Position toPos, const BoardState& stat
 		//left
 		if (toPos.second == 2) {
 			if (!_isEmpty(toPos.first, 1, 3, state)
-				|| _isAttacked(toPos.first, 2, 3, attIdx, state))	return false;
+				|| _isAttacked(toPos.first, 2, 4, attIdx, state))	return false;
 			auto& sqInfo = state.squares[toPos.first][0];
 			return !sqInfo.didMove && sqInfo.piecePtr && sqInfo.piecePtr->getType() == PieceType::Rook;
 		}
 		//right
 		else if (toPos.second == 6) {
 			if (!_isEmpty(toPos.first, 5, 6, state) 
-				|| _isAttacked(toPos.first, 5, 6, attIdx, state))	return false;
+				|| _isAttacked(toPos.first, 4, 6, attIdx, state))	return false;
 			auto& sqInfo = state.squares[toPos.first][7];
 			return !sqInfo.didMove && sqInfo.piecePtr && sqInfo.piecePtr->getType() == PieceType::Rook;
 		}
@@ -90,16 +90,26 @@ std::vector<Position> PieceKing::getAllAvailableMoves(Position fromPos,
 	}
 
 	//Check castling options, CHESS ONLY!
-	if (state.type == BoardType::Chess) {
-		//Check left
+	if (state.type == BoardType::Chess && _isInitialPosition(fromPos, color)) {
+		auto attIdx = Color::Black == color ? 0 : 1;
 		Position pos = { fromPos.first, fromPos.second - 2 };
-		if (canMove(fromPos, pos, state))
-			positions.push_back(pos);
+		
+		//Check left
+		if (_isEmpty(fromPos.first, 1, 3, state)
+			&& !_isAttacked(fromPos.first, 2, 3, attIdx, state)) {
+			auto& sqInfo = state.squares[fromPos.first][0];
+			if (!sqInfo.didMove && sqInfo.piecePtr && sqInfo.piecePtr->getType() == PieceType::Rook)
+				positions.push_back(pos);
+		}
 
 		pos = { fromPos.first, fromPos.second + 2 };
 		//Check right
-		if (canMove(fromPos, pos, state))
-			positions.push_back(pos);
+		if (_isEmpty(fromPos.first, 5, 6, state)
+			&& !_isAttacked(fromPos.first, 5, 6, attIdx, state)) {
+			auto& sqInfo = state.squares[fromPos.first][7];
+			if (!sqInfo.didMove && sqInfo.piecePtr && sqInfo.piecePtr->getType() == PieceType::Rook)
+				positions.push_back(pos);
+		}
 	}
 
 	return positions;
@@ -126,4 +136,25 @@ void PieceKing::moveAction(Position fromPos, Position toPos, BoardState& state) 
 	}
 
 	PieceGeneric::moveAction(fromPos, toPos, state);
+}
+
+std::vector<Position> PieceKing::getAllThreateningMoves(Position fromPos, const BoardState& state) const
+{
+	std::vector<Position> positions;
+
+	for (auto& p : getAllAvailableMoves(fromPos, state)) {
+		//Even if we cant move here right now, we are threatening this square
+		//so use custom calculation
+		Position diff = { fromPos.first - p.first, fromPos.second - p.second };
+		if (std::abs(diff.second) > 1)	continue;
+
+		if (!isInsideBoard(p, state))
+			continue;
+
+		auto& target = state.squares[p.first][p.second];
+		if (target.piecePtr && target.piecePtr->getColor() != color)
+			positions.push_back(p);
+	}
+
+	return positions;
 }

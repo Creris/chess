@@ -2,6 +2,7 @@
 #include "../../include/pieces/piecebuilder.hpp"
 
 #include "../../include/profiler.hpp"
+#include "../../include/stringutil.hpp"
 
 inline Position _findPawnFromShadow(const BoardState& state, Position shadowPos) {
 	if (shadowPos.first == 5)
@@ -26,7 +27,7 @@ inline PieceStorage _captureShadowPawn(BoardState& state, Position shadowPos) {
 	return pawnStorage;
 }
 
-inline bool withinBounds(Position pos, int width, int height) {
+bool GenericBoard::withinBounds(Position pos, int width, int height) const {
 	return !(pos.first < 0 || pos.second < 0 ||
 			pos.first >= height || pos.second >= width);
 }
@@ -67,7 +68,7 @@ bool GenericBoard::_isChecked(PieceStorage storage) const
 	ProfileDeclare;
 	auto& piece = storage.piecePtr;
 	if (!piece)	return false;
-	static auto colorIndex = [](Color c) { return c == Color::White ? 0 : 1; };
+	static auto colorIndex = [](Color c) { return c == Color::White ? 1 : 0; };
 	return storage.threat[colorIndex(piece->getColor())];
 }
 
@@ -87,15 +88,136 @@ void GenericBoard::_removeShadows(Color ofColor)
 
 bool GenericBoard::_checkStalemate() const
 {
+	return _checkStalemate(currentPlayer);
+}
+
+bool GenericBoard::_checkStalemate(Color forColor) const
+{
 	ProfileDeclare;
-	return (!getAvailableMoveCount() && !_isChecked(getKing()));
+	return (!getAvailableMoveCount(forColor) && !_isChecked(getKing(forColor)));
 }
 
 bool GenericBoard::_checkCheckmate() const
 {
+	return _checkCheckmate(currentPlayer);
+}
+
+bool GenericBoard::_checkCheckmate(Color forColor) const
+{
 	ProfileDeclare;
-	return (!getAvailableMoveCount() && _isChecked(getKing()));
-	
+	return (!getAvailableMoveCount(forColor) && _isChecked(getKing(forColor)));
+}
+
+std::string GenericBoard::parseTurnToString(Position from, PieceType fromType, Color fromColor,
+											Position to, PieceType toType, Color toColor,
+											PieceType upgraded) const
+{
+	ProfileDeclare;
+
+	using namespace std::string_literals;
+
+	if (!withinBounds(from, state.width, state.height) ||
+		!withinBounds(to, state.width, state.height))
+		return "";
+
+	static auto outputChar = [](PieceType type) {
+		switch (type) {
+			case PieceType::King:
+				return 'K';
+			case PieceType::Queen:
+				return 'Q';
+			case PieceType::Bishop:
+				return 'B';
+			case PieceType::Knight:
+				return 'N';
+			case PieceType::Rook:
+				return 'R';
+		}
+		return '\0';
+	};
+
+
+	Position diff = { from.first - to.first, from.second - to.second };
+
+	std::string fromStr = positionToString(from);
+	std::string toStr = positionToString(to);
+	std::string suffix = "";
+
+	auto enemyColor = fromColor == Color::White ? Color::Black : Color::White;
+
+	//Check castling
+	if (fromType == PieceType::King && !diff.first && std::abs(diff.second) == 2) {
+		//Queenside
+		if (diff.second > 0)	return "0-0-0";
+		//Kingside
+		else					return "0-0";
+	}
+
+	std::string captureSymbol = "";
+	//A capture is indicated with x between the squares we move from and to.
+	if (toType != PieceType::None
+		|| (toType == PieceType::ShadowPawn && fromType == PieceType::Pawn)) {
+		captureSymbol = 'x';
+	}
+
+
+	char pieceCode = outputChar(fromType);
+	if (fromType == PieceType::Pawn) {
+		//Pawn only needs file it moved from
+		fromStr = toType == PieceType::None ? '\0' : fromStr[0];
+		if (upgraded != PieceType::None)
+			suffix = outputChar(upgraded);
+	}
+
+	//Check en passant
+	if (toType == PieceType::ShadowPawn && fromType == PieceType::Pawn) {
+		//En Passant capture, file from + x + destination square + e.p. code for en passant
+		suffix += "e.p.";
+	}
+
+	auto isChecked = _isChecked(getKing(enemyColor));
+	auto available = getAvailableMoveCount(enemyColor);
+
+	if (isChecked) {
+		suffix += available > 0 ? "+" : "#";
+	}
+
+	//Classic syntax, Piece code + source square + capture symbol, if any + destination square.
+	return pieceCode + fromStr + captureSymbol + toStr + suffix;
+}
+
+void GenericBoard::writeDownMove(Position from, PieceType fromType, Color fromColor,
+								 Position to, PieceType toType, Color toColor,
+								 PieceType upgraded)
+{
+	using namespace std::string_literals;
+
+	auto parsed = strip(parseTurnToString(from, fromType, fromColor, to, toType, toColor, upgraded), "\0 "s);
+	if (currentPlayer == Color::Black) {
+		turnStrings.back().second = parsed;
+		turnStrings.emplace_back();
+		turnNumber++;
+	}
+	else {
+		turnStrings.back().first = parsed;
+	}
+}
+
+void GenericBoard::writeDownForfeit()
+{
+	if (currentPlayer == Color::Black) {
+		turnStrings.back().second = "1-0";
+		turnStrings.emplace_back();
+		turnNumber++;
+	}
+	else {
+		turnStrings.back().first = "0-1";
+	}
+}
+
+void GenericBoard::writeDownPat()
+{
+	turnStrings.emplace_back("1/2 -", "1/2");
 }
 
 PieceStorage GenericBoard::getKing() const
@@ -174,17 +296,9 @@ void GenericBoard::addPiece(Position position, PieceType type, Color color) {
 	state.squares[position.first][position.second] = PieceStorage{ position, piece };
 }
 
-Position _convert(const std::string& str) {
-	if (str.size() != 2)				return { -1, -1 };
-	auto lower = std::tolower(str[0]);
-	if (lower < 'a' || lower > 'h')		return { -1, -1 };
-	if (str[1] < '1' || str[1] > '8')	return { -1, -1 };
-	return { str[1] - '1', lower - 'a' };
-}
-
 void GenericBoard::addPiece(const char* strPos, PieceType type, Color color)
 {
-	auto pos = _convert(strPos);
+	auto pos = stringToPosition(strPos);
 	if (withinBounds(pos, state.width, state.height))
 		addPiece(pos, type, color);
 }
@@ -203,11 +317,7 @@ void GenericBoard::initialize(const BoardState& state)
 	if (state.width == this->state.width && state.height == this->state.height)
 		this->state = state;
 
-	blackGrave.clear();
-	whiteGrave.clear();
-	selected = { -1, -1 };
-
-	_convertNulls();
+	initialize();
 }
 
 void GenericBoard::initialize()
@@ -218,6 +328,10 @@ void GenericBoard::initialize()
 	selected = { -1, -1 };
 	winner = Color::None;
 	currentPlayer = Color::White;
+	turnStrings.clear();
+	turnStrings.shrink_to_fit();
+	turnStrings.resize(1);
+	turnNumber = 1;
 
 	_convertNulls();
 	recalculateThreat();
@@ -225,7 +339,6 @@ void GenericBoard::initialize()
 
 void GenericBoard::recalculateThreat()
 {
-	ProfileDeclare;
 	recalculateThreat(state);
 }
 
@@ -349,12 +462,23 @@ bool GenericBoard::tryMove(Position fromPos, Position toPos)
 	if (selected.piecePtr->getColor() != currentPlayer)	return false;
 
 	if (_canDoMove(fromPos, toPos)) {
+		auto& toSquare = state.squares[toPos.first][toPos.second].piecePtr;
+		
+		auto fromType = selected.piecePtr->getType();
+		auto fromColor = selected.piecePtr->getColor();
+
+		auto toType = toSquare->getType();
+		auto toColor = toSquare->getColor();
+
 		_performMove(fromPos, toPos);
+
+		recalculateThreat();
+
+		writeDownMove(fromPos, fromType, fromColor, toPos, toType, toColor, PieceType::None);
 		_switchColor();
 		_removeShadows(currentPlayer);
-		recalculateThreat();
 		_checkStaleOrCheckmate();
-		selected.didMove = true;
+		state.squares[toPos.first][toPos.second].didMove = true;
 		return true;
 	}
 
@@ -399,6 +523,39 @@ void GenericBoard::forfeit()
 {
 	if (winner != Color::None)	return;
 	winner = currentPlayer == Color::White ? Color::Black : Color::White;
+	writeDownForfeit();
+}
+
+int GenericBoard::getTurn() const
+{
+	return turnNumber;
+}
+
+std::pair<std::string, std::string> GenericBoard::getTurnInfo() const
+{
+	if (!turnStrings.size())	return {};
+	return turnStrings.back();
+}
+
+std::pair<std::string, std::string> GenericBoard::getTurnInfo(int turn) const
+{
+	if (turn < 1 || turn > turnStrings.size())	return {};
+	return turnStrings[turn - 1];
+}
+
+std::vector<std::pair<std::string, std::string>> GenericBoard::getTurnInfo(int turn, int until) const
+{
+	if (turn < 1 || turn > turnStrings.size())	return {};
+	if (until < 1 || until < turn)	return {};
+
+	std::vector<std::pair<std::string, std::string>> v;
+	
+	until = std::min(turnStrings.size(), static_cast<size_t>(until));
+
+	for (turn = turn - 1; turn <= until - 1; ++turn)
+		v.push_back(turnStrings[turn]);
+
+	return v;
 }
 
 bool GenericBoard::_canDoMove(Position fromPos, Position toPos) const
@@ -460,11 +617,14 @@ void GenericBoard::_switchColor()
 void GenericBoard::_checkStaleOrCheckmate()
 {
 	ProfileDeclare;
-	if (_checkStalemate()) {
+	auto movesAvailable = getAvailableMoveCount();
+	bool checked = _isChecked(getKing());
+
+	if (!movesAvailable && !checked) {
 		winner = Color::Pat;
 		currentPlayer = Color::None;
 	}
-	else if (_checkCheckmate()) {
+	else if (!movesAvailable && checked) {
 		_switchColor();
 		winner = currentPlayer;
 		currentPlayer = Color::None;

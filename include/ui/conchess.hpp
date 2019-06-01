@@ -9,6 +9,7 @@
 class ConsoleChess {
 	std::shared_ptr<GenericBoard> board = getBoard(BoardType::Chess);
 	int gridSize = 8;
+	std::pair<int, int> turns = { 1, 1 };
 
 	friend std::shared_ptr<GenericBoard>& getChessBoard();
 protected:
@@ -29,6 +30,9 @@ public:
 
 	int grid() const;
 	bool grid(int newSize);
+
+	std::pair<int, int> turn() const;
+	void turn(int b, int e);
 
 	static ConsoleChess& getInstance();
 };

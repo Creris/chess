@@ -24,5 +24,12 @@ std::vector<std::string> split(const std::string& s, std::string_view delim = " 
 std::string_view strip(std::string_view s, std::string_view delim = " \n\t");
 std::string strip(const std::string& s, std::string_view delim = " \n\t");
 
+std::string interleave(const std::vector<std::string_view>& first,
+					   const std::vector<std::string_view>& second,
+					   const std::string& between, const std::string& end = "\n");
+
+std::string interleave(const std::vector<std::string>& first,
+					   const std::vector<std::string>& second,
+					   const std::string& between, const std::string& end = "\n");
 
 #endif // STRING_UTIL_HEADER_H_

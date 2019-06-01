@@ -118,9 +118,48 @@ std::string_view strip(std::string_view s, std::string_view delim) {
 std::string strip(const std::string& s, std::string_view delim) {
 	int beg = 0;
 	int end = s.size() - 1;
-	while (s.size() && _isIn(s[beg], delim))
+	while (beg < s.size() && _isIn(s[beg], delim))
 		beg++;
-	while (s.size() && _isIn(s[end], delim))
+	while (end < s.size() && _isIn(s[end], delim))
 		end--;
 	return s.substr(beg, end - beg + 1);
+}
+
+std::string interleave(const std::vector<std::string_view>& first,
+					   const std::vector<std::string_view>& second,
+					   const std::string& between, const std::string& end)
+{
+	std::string result;
+	auto minSize = std::min(first.size(), second.size());
+	auto maxSize = std::max(first.size(), second.size());
+	auto& remainder = first.size() == maxSize ? first : second;
+
+	for (size_t i = 0; i < minSize; ++i) {
+		result += std::string{ first[i] } + between + std::string{ second[i] } + end;
+	}
+
+	for (size_t i = minSize; i < maxSize; ++i) {
+		result += std::string{ remainder[i] } + end;
+	}
+
+	return result;
+}
+
+std::string interleave(const std::vector<std::string>& first,
+					   const std::vector<std::string>& second,
+					   const std::string& between, const std::string& end) {
+	std::string result;
+	auto minSize = std::min(first.size(), second.size());
+	auto maxSize = std::max(first.size(), second.size());
+	auto& remainder = first.size() == maxSize ? first : second;
+
+	for (size_t i = 0; i < minSize; ++i) {
+		result += first[i] + between + second[i] + end;
+	}
+
+	for (size_t i = minSize; i < maxSize; ++i) {
+		result += remainder[i] + end;
+	}
+
+	return result;
 }
