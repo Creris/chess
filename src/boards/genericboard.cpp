@@ -277,7 +277,14 @@ void GenericBoard::writeDownForfeit()
 
 void GenericBoard::writeDownPat()
 {
-	turnStrings.emplace_back("1/2 -", "1/2");
+	using namespace std::string_literals;
+
+	if (turnStrings.back().first == "" && turnStrings.back().second == "")
+		turnStrings.back() = std::make_pair("1/2 -"s, "1/2"s);
+	else {
+		turnStrings.emplace_back("1/2 -", "1/2");
+		turnNumber++;
+	}
 }
 
 PieceStorage GenericBoard::getKing() const
@@ -689,7 +696,6 @@ void GenericBoard::_checkStaleOrCheckmate()
 	if (!movesAvailable && !checked) {
 		winner = Color::Pat;
 		writeDownPat();
-		++turnNumber;
 		currentPlayer = Color::None;
 	}
 	else if (!movesAvailable && checked) {
