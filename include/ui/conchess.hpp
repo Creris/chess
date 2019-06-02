@@ -5,10 +5,18 @@
 
 #include "../boards/chess.hpp"
 #include "../boards/boardbuilder.hpp"
+#include "concommand.hpp"
+
+#include <memory>
+#include <utility>
+#include <string>
+#include <vector>
+
+using namespace std::string_literals;
 
 class ConsoleChess {
 	std::shared_ptr<GenericBoard> board = getBoard(BoardType::Chess);
-	int gridSize = 8;
+	int gridSize = 2;
 	std::pair<int, int> turns = { 1, 1 };
 
 	friend std::shared_ptr<GenericBoard>& getChessBoard();
@@ -36,5 +44,10 @@ public:
 
 	static ConsoleChess& getInstance();
 };
+
+std::shared_ptr<GenericBoard>& getChessBoard();
+
+std::string getListOfCommands();
+void listCommands();
 
 #endif // CONSOLE_CHESS_HEADER_H_
