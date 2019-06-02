@@ -343,7 +343,11 @@ void ConsoleChess::render() const
 			}
 		}
 		
-		if (realBoard->getWinner() != Color::None) {
+		if (realBoard->getWinner() == Color::Pat) {
+			std::cout << "Game over! The game ended in Pat.\n\n";
+		}
+		else if (realBoard->getWinner() != Color::None) {
+
 			std::cout << "Game over! Winner is " << colorToName(realBoard->getWinner()) << "\n\n";
 		}
 		else {

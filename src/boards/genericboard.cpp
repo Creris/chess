@@ -688,6 +688,8 @@ void GenericBoard::_checkStaleOrCheckmate()
 
 	if (!movesAvailable && !checked) {
 		winner = Color::Pat;
+		writeDownPat();
+		++turnNumber;
 		currentPlayer = Color::None;
 	}
 	else if (!movesAvailable && checked) {

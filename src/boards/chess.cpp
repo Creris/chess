@@ -38,7 +38,13 @@ void ChessBoard::initialize()
 	}
 	//*/
 
-	///*
+	addPiece("c8", PieceType::King, Color::Black);
+
+	addPiece("e3", PieceType::King, Color::White);
+	addPiece("e5", PieceType::Bishop, Color::White);
+	addPiece("d4", PieceType::Queen, Color::White);
+
+	/*
 	addPiece("a7", PieceType::Bishop, Color::Black);
 	addPiece("d6", PieceType::Bishop, Color::Black);
 
