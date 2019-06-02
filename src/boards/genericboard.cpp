@@ -69,7 +69,7 @@ bool GenericBoard::_isChecked(PieceStorage storage) const
 	auto& piece = storage.piecePtr;
 	if (!piece)	return false;
 	static auto colorIndex = [](Color c) { return c == Color::White ? 1 : 0; };
-	return storage.threat[colorIndex(piece->getColor())];
+	return storage.threat[colorIndex(piece->getColor())].size();
 }
 
 void GenericBoard::_removeShadows(Color ofColor)
@@ -108,9 +108,47 @@ bool GenericBoard::_checkCheckmate(Color forColor) const
 	return (!getAvailableMoveCount(forColor) && _isChecked(getKing(forColor)));
 }
 
-std::string GenericBoard::parseTurnToString(Position from, PieceType fromType, Color fromColor,
-											Position to, PieceType toType, Color toColor,
-											PieceType upgraded) const
+std::vector<Position> _attacksOfType(PieceType type,
+									 const threat_t& input) {
+	std::vector<Position> poss;
+
+	for (auto& v : input) {
+		if (v.second == type)
+			poss.push_back(v.first);
+	}
+
+	return poss;
+}
+
+bool _multipleFromRank(int8_t rank, const std::vector<Position>& poss) {
+	int occurence = 0;
+	for (auto& pos : poss) {
+		if (rank == pos.first) {
+			if (occurence)	return true;
+			occurence++;
+		}
+	}
+
+	return false;
+}
+
+bool _multipleFromFile(int8_t file, const std::vector<Position>& poss) {
+	int occurence = 0;
+	for (auto& pos : poss) {
+		if (file == pos.second) {
+			if (occurence)	return true;
+			occurence++;
+		}
+	}
+
+	return false;
+}
+
+std::string GenericBoard::parseTurnToString(Position from, PieceType fromType,
+											Color fromColor, Position to,
+											PieceType toType, Color toColor,
+											PieceType upgraded,
+											const std::array<threat_t, 2> & threats) const
 {
 	ProfileDeclare;
 
@@ -136,7 +174,7 @@ std::string GenericBoard::parseTurnToString(Position from, PieceType fromType, C
 		return '\0';
 	};
 
-
+	auto attIdx = [](Color c) { return c == Color::White ? 0 : 1; };
 	Position diff = { from.first - to.first, from.second - to.second };
 
 	std::string fromStr = positionToString(from);
@@ -160,7 +198,6 @@ std::string GenericBoard::parseTurnToString(Position from, PieceType fromType, C
 		captureSymbol = 'x';
 	}
 
-
 	char pieceCode = outputChar(fromType);
 	if (fromType == PieceType::Pawn) {
 		//Pawn only needs file it moved from
@@ -182,17 +219,40 @@ std::string GenericBoard::parseTurnToString(Position from, PieceType fromType, C
 		suffix += available > 0 ? "+" : "#";
 	}
 
+	auto poss = _attacksOfType(fromType, threats[attIdx(fromColor)]);
+	auto multiFile = _multipleFromFile(from.second, poss);
+	auto multiRank = _multipleFromRank(from.first, poss);
+
+	if (poss.size() == 1)
+		fromStr = "";
+	else if (!multiFile && !multiRank) {
+		fromStr = fromStr[0];
+	}
+	else if (!multiFile && multiRank) {
+		fromStr = fromStr[0];
+	}
+	else if (multiFile && multiRank) {
+		//fromStr = fromStr;
+	}
+	else {
+		fromStr = fromStr[1];
+	}
+
 	//Classic syntax, Piece code + source square + capture symbol, if any + destination square.
 	return pieceCode + fromStr + captureSymbol + toStr + suffix;
 }
 
-void GenericBoard::writeDownMove(Position from, PieceType fromType, Color fromColor,
-								 Position to, PieceType toType, Color toColor,
-								 PieceType upgraded)
+void GenericBoard::writeDownMove(Position from, PieceType fromType,
+								 Color fromColor, Position to,
+								 PieceType toType, Color toColor,
+								 PieceType upgraded,
+								 const std::array<threat_t, 2> & threats)
 {
 	using namespace std::string_literals;
 
-	auto parsed = strip(parseTurnToString(from, fromType, fromColor, to, toType, toColor, upgraded), "\0 "s);
+	auto parsed = strip(parseTurnToString(from, fromType, fromColor,
+										  to, toType, toColor,
+										  upgraded, threats), "\0 "s);
 	if (currentPlayer == Color::Black) {
 		turnStrings.back().second = parsed;
 		turnStrings.emplace_back();
@@ -358,12 +418,11 @@ void GenericBoard::recalculateThreat(BoardState& state) const
 			if (type == PieceType::None || type == PieceType::ShadowPawn)
 				continue;
 
-			for (auto& p : piece->getAllThreateningMoves({ 
-														static_cast<int>(rank), 
-														static_cast<int>(file)
-													  }, state)) {
+			Position pos = { static_cast<int>(rank), static_cast<int>(file) };
+
+			for (auto& p : piece->getAllThreateningMoves(pos, state)) {
 				auto& square = state.squares[p.first][p.second];
-				square.threat[cToIdx(piece->getColor())]++;
+				square.threat[cToIdx(piece->getColor())].emplace_back(pos, type);
 			}
 		}
 	}
@@ -387,7 +446,7 @@ bool GenericBoard::select(Position atPosition)
 	if (!withinBounds(atPosition, state.width, state.height))
 		return false;
 
-	auto piece = getPieceStorage(atPosition);
+	auto& piece = getPieceStorage(atPosition);
 	if (!piece.piecePtr)	return false;
 	auto type = piece.piecePtr->getType();
 	if (type == PieceType::None || type == PieceType::ShadowPawn)
@@ -423,10 +482,16 @@ std::shared_ptr<PieceGeneric> GenericBoard::getPiece(Position atPos) const
 	return state.squares[atPos.first][atPos.second].piecePtr;
 }
 
-PieceStorage GenericBoard::getPieceStorage(Position atPos) const
+const PieceStorage& GenericBoard::getPieceStorage(Position atPos) const
 {
 	if (!withinBounds(atPos, state.width, state.height))
-		return {};
+		throw std::out_of_range("Invalid position");
+	return state.squares[atPos.first][atPos.second];
+}
+
+PieceStorage& GenericBoard::getPieceStorage(Position atPos) {
+	if (!withinBounds(atPos, state.width, state.height))
+		throw std::out_of_range("Invalid position");
 	return state.squares[atPos.first][atPos.second];
 }
 
@@ -469,12 +534,13 @@ bool GenericBoard::tryMove(Position fromPos, Position toPos)
 
 		auto toType = toSquare->getType();
 		auto toColor = toSquare->getColor();
+		auto threats = getPieceStorage(toPos).threat;
 
 		_performMove(fromPos, toPos);
 
 		recalculateThreat();
 
-		writeDownMove(fromPos, fromType, fromColor, toPos, toType, toColor, PieceType::None);
+		writeDownMove(fromPos, fromType, fromColor, toPos, toType, toColor, PieceType::None, threats);
 		_switchColor();
 		_removeShadows(currentPlayer);
 		_checkStaleOrCheckmate();
@@ -576,7 +642,7 @@ bool GenericBoard::_canDoMove(Position fromPos, Position toPos) const
 
 
 	recalculateThreat(fakeState);
-	if (getKing(fakeState, thisPlayer).threat[enemyPlayer])
+	if (getKing(fakeState, thisPlayer).threat[enemyPlayer].size())
 		return false;
 
 	return true;

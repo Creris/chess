@@ -17,6 +17,7 @@
 #include <cstdint>
 
 #include "boardtype.hpp"
+#include "piecetype.hpp"
 
 #include <stdexcept>
 #include <utility>
@@ -49,6 +50,8 @@ enum class Color {
 //Forward declare generic piece interface
 class PieceGeneric;
 
+using threat_t = std::vector<std::pair<Position, PieceType>>;
+
 /**
 	Defines a storage information class for pointers to pieces.
 
@@ -59,7 +62,7 @@ struct PieceStorage {
 	Position startingPos = { -1, -1 };
 	std::shared_ptr<PieceGeneric> piecePtr = nullptr;
 	bool didMove = false;
-	std::array<uint8_t, 2> threat = {};
+	std::array<threat_t, 2> threat = {};
 
 	PieceStorage() {}
 	PieceStorage(Position _s,

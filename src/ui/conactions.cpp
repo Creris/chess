@@ -51,7 +51,10 @@ namespace actions {
 
 	bool quit(const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size())	return _internalHelp({ "quit" });
+		if (args.size() > 2)	return _internalHelp({ "quit" });
+		else if (args.size() == 1) {
+			export_moves(args);
+		}
 		std::cout << "Quiting chess.\n";
 		exit(0);
 	}
@@ -223,7 +226,7 @@ namespace actions {
 												 const std::vector<Position>& valid) {
 		ProfileDeclare;
 		auto& board = getChessBoard();
-		auto storage = board->getPieceStorage(atPosition);
+		auto& storage = board->getPieceStorage(atPosition);
 		if (!storage.piecePtr)	return {};
 		if (storage.piecePtr->getType() == PieceType::ShadowPawn ||
 			storage.piecePtr->getType() == PieceType::None)
@@ -241,7 +244,7 @@ namespace actions {
 		ProfileDeclare;
 		if (pos.first == -1 || pos.second == -1)	return;
 		auto& board = getChessBoard();
-		auto piece = board->getPieceStorage(pos);
+		auto& piece = board->getPieceStorage(pos);
 
 		auto valid = board->getPossibleMoves(pos);
 		auto invalid = _getSelfCheckPositions(pos, valid);
@@ -311,7 +314,7 @@ namespace actions {
 		if (args.size() != 1)	return _internalHelp({ "info" });
 		Position pos = stringToPosition(args[0]);
 		if (pos.first == -1 || pos.second == -1)	return _internalHelp({ "info" });
-		auto storage = getChessBoard()->getPieceStorage(pos);
+		auto& storage = getChessBoard()->getPieceStorage(pos);
 		std::cout << "Information about position " << args[0] << ":\n";
 		auto type = PieceType::None;
 		auto color = Color::None;
@@ -323,8 +326,8 @@ namespace actions {
 		auto typeName = pieceToName(type, color);
 
 		const char* words[] = { "piece is", "pieces are" };
-		int whiteAttacking = static_cast<int>(storage.threat[0]);
-		int blackAttacking = static_cast<int>(storage.threat[1]);
+		int whiteAttacking = static_cast<int>(storage.threat[0].size());
+		int blackAttacking = static_cast<int>(storage.threat[1].size());
 
 		std::cout << "  Piece name: " << typeName;
 		if (type != PieceType::None && type != PieceType::ShadowPawn)
@@ -336,10 +339,27 @@ namespace actions {
 			_printPossibleMoves(pos);
 		}
 
-		std::cout << "  Threats:    " << whiteAttacking << " White "
-			<< words[whiteAttacking != 1] << " attacking this square.\n";
-		std::cout << "              " << blackAttacking << " Black "
-			<< words[blackAttacking != 1] << " attacking this square.\n";
+		std::cout << "\n  Threats:    " << whiteAttacking << " White "
+			<< words[whiteAttacking != 1] << " attacking this square:\n";
+
+		std::string attMsg;
+		for (auto& attacking : storage.threat[0]) {
+			attMsg += typeToChar(attacking.second) + " from "s + positionToString(attacking.first) + ",\n";
+		}
+
+		std::cout << "                 ";
+		std::cout << join(split(strip(attMsg, ",\n"), "\n"), "\n                 ") << "\n";
+
+		std::cout << "\n              " << blackAttacking << " Black "
+			<< words[blackAttacking != 1] << " attacking this square:\n";
+
+		attMsg = "";
+		for (auto& attacking : storage.threat[1]) {
+			attMsg += typeToChar(attacking.second) + " from "s + positionToString(attacking.first) + ",\n";
+		}
+
+		std::cout << "                 ";
+		std::cout << join(split(strip(attMsg, ",\n"), "\n"), "\n                 ") << "\n";
 
 		std::cout << "\n";
 

@@ -26,7 +26,7 @@ void ChessBoard::initialize()
 		PieceType::Rook
 	};
 	
-	///*
+	/*
 	for (int i = 0; i < state.width; ++i) {
 		//Distribute pawns
 		addPiece({ 1, i }, PieceType::Pawn, Color::White);
@@ -38,12 +38,30 @@ void ChessBoard::initialize()
 	}
 	//*/
 
+	///*
+	addPiece("a7", PieceType::Bishop, Color::Black);
+	addPiece("d6", PieceType::Bishop, Color::Black);
+
+	addPiece("d8", PieceType::Rook, Color::Black);
+	addPiece("h8", PieceType::Rook, Color::Black);
+
+	addPiece("a1", PieceType::Rook, Color::White);
+	addPiece("a5", PieceType::Rook, Color::White);
+
+	addPiece("e4", PieceType::Queen, Color::White);
+	addPiece("h4", PieceType::Queen, Color::White);
+	addPiece("h1", PieceType::Queen, Color::White);
+
+	addPiece("g7", PieceType::King, Color::Black);
+	addPiece("b2", PieceType::King, Color::White);
+	//*/
+
 	/*
 	addPiece("e1", PieceType::King, Color::White);
 	addPiece("e8", PieceType::King, Color::Black);
 
 	addPiece("a6", PieceType::Rook, Color::White);
-	addPiece("h5", PieceType::Queen, Color::White);
+	addPiece("f5", PieceType::Queen, Color::White);
 	//*/
 
 	/*

@@ -54,13 +54,17 @@ protected:
 	virtual bool _checkCheckmate() const;
 	virtual bool _checkCheckmate(Color forColor) const;
 
-	virtual std::string parseTurnToString(Position from, PieceType fromType, Color fromColor,
-										  Position to, PieceType toType, Color toColor,
-										  PieceType upgraded) const;
+	virtual std::string parseTurnToString(Position from, PieceType fromType,
+										  Color fromColor, Position to,
+										  PieceType toType, Color toColor,
+										  PieceType upgraded,
+										  const std::array<threat_t, 2>& threats) const;
 
-	void writeDownMove(Position from, PieceType fromType, Color fromColor,
-					   Position to, PieceType toType, Color toColor,
-					   PieceType upgraded);
+	void writeDownMove(Position from, PieceType fromType,
+					   Color fromColor, Position to,
+					   PieceType toType, Color toColor, 
+					   PieceType upgraded,
+					   const std::array<threat_t, 2> & threats);
 
 	void writeDownForfeit();
 	void writeDownPat();
@@ -150,7 +154,9 @@ public:
 	Position getSelectedPosition() const;
 
 	std::shared_ptr<PieceGeneric> getPiece(Position atPos) const;
-	PieceStorage getPieceStorage(Position atPos) const;
+
+	PieceStorage& getPieceStorage(Position atPos);
+	const PieceStorage& getPieceStorage(Position atPos) const;
 
 	bool didMove() const;
 	bool didMove(Position position) const;
@@ -186,6 +192,7 @@ public:
 			auto toType = toSquare->getType();
 			auto toColor = toSquare->getColor();
 			auto upgraded = PieceType::None;
+			auto threats = getPieceStorage(toPos).threat;
 
 			_performMove(fromPos, toPos);
 			if (doUpgrade(fromPos, toPos, onUpgrade))
@@ -193,7 +200,7 @@ public:
 
 			recalculateThreat();
 
-			writeDownMove(fromPos, fromType, fromColor, toPos, toType, toColor, upgraded);
+			writeDownMove(fromPos, fromType, fromColor, toPos, toType, toColor, upgraded, threats);
 
 			_switchColor();
 			_removeShadows(currentPlayer);

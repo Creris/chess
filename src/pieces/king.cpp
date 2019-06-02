@@ -19,7 +19,7 @@ bool _isEmpty(int8_t rank, int8_t fileBegin, int8_t fileEnd, const BoardState& s
 bool _isAttacked(int8_t rank, int8_t fileBegin, int8_t fileEnd, int attIdx, const BoardState& state) {
 	for (; fileBegin <= fileEnd; ++fileBegin) {
 		Position pos = { rank, fileBegin };
-		if (state.squares[pos.first][pos.second].threat[attIdx])	return true;
+		if (state.squares[pos.first][pos.second].threat[attIdx].size())	return true;
 	}
 	return false;
 }

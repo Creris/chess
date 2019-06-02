@@ -34,11 +34,13 @@ enum class Command {
 };
 
 inline std::unordered_map<Command, std::pair<std::string, std::string>> commandHelpStrings = {
-	{ Command::Quit, std::make_pair("quit"s,
-			"Quits the chess game."s)
+	{ Command::Quit, std::make_pair("quit [FILE]"s,
+			"Quits the chess game. If FILE is provided, exports\n"s
+			"the list of moves to that file before quiting the game."s)
 	},
-	{ Command::Exit, std::make_pair("exit"s,
-			"Quits the chess game."s)
+	{ Command::Exit, std::make_pair("exit [FILE]"s,
+			"Quits the chess game. If FILE is provided, exports\n"s
+			"the list of moves to that file before quiting the game."s)
 	},
 	{ Command::Help, std::make_pair("help\nhelp { commands }"s,
 			"Prints this help message.\n"s
