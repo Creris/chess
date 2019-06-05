@@ -250,7 +250,7 @@ namespace actions {
 		auto invalid = _getSelfCheckPositions(pos, valid);
 
 		static auto _cleanBack = [](std::string& s) {
-			if (s.size() >= 2 && s.ends_with(", ")) {
+			if (s.size() >= 2 && s[s.size() - 1] == ' ' && s[s.size() - 2] == ',') {
 				s.pop_back();
 				s.pop_back();
 			}
@@ -340,27 +340,37 @@ namespace actions {
 		}
 
 		std::cout << "\n  Threats:    " << whiteAttacking << " White "
-			<< words[whiteAttacking != 1] << " attacking this square:\n";
+			<< words[whiteAttacking != 1] << " attacking this square";
+
 
 		std::string attMsg;
 		for (auto& attacking : storage.threat[0]) {
 			attMsg += typeToChar(attacking.second) + " from "s + positionToString(attacking.first) + ",\n";
 		}
 
-		std::cout << "                 ";
-		std::cout << join(split(strip(attMsg, ",\n"), "\n"), "\n                 ") << "\n";
+		if (attMsg != "") {
+			std::cout << ":\n                 ";
+			std::cout << join(split(strip(attMsg, ",\n"), "\n"), "\n                 ") << "\n";
+		}
+		else {
+			std::cout << ".\n";
+		}
 
 		std::cout << "\n              " << blackAttacking << " Black "
-			<< words[blackAttacking != 1] << " attacking this square:\n";
+			<< words[blackAttacking != 1] << " attacking this square";
 
 		attMsg = "";
 		for (auto& attacking : storage.threat[1]) {
 			attMsg += typeToChar(attacking.second) + " from "s + positionToString(attacking.first) + ",\n";
 		}
 
-		std::cout << "                 ";
-		std::cout << join(split(strip(attMsg, ",\n"), "\n"), "\n                 ") << "\n";
-
+		if (attMsg != "") {
+			std::cout << ":\n                 ";
+			std::cout << join(split(strip(attMsg, ",\n"), "\n"), "\n                 ") << "\n";
+		}
+		else {
+			std::cout << ".\n";
+		}
 		std::cout << "\n";
 
 		return true;

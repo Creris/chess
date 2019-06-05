@@ -3,6 +3,7 @@
 
 #include "../../include/profiler.hpp"
 #include "../../include/stringutil.hpp"
+#include "../../include/ui/conactions.hpp"
 
 inline Position _findPawnFromShadow(const BoardState& state, Position shadowPos) {
 	if (shadowPos.first == 5)
@@ -70,6 +71,38 @@ bool GenericBoard::_isChecked(PieceStorage storage) const
 	if (!piece)	return false;
 	static auto colorIndex = [](Color c) { return c == Color::White ? 1 : 0; };
 	return storage.threat[colorIndex(piece->getColor())].size();
+}
+
+std::string GenericBoard::_stateToString(const BoardState& state)
+{
+	std::string s;
+	
+	s += std::to_string(getPossibleMoves(state, getKingPos(state, Color::White)).size()) + "\n";
+	s += std::to_string(getPossibleMoves(state, getKingPos(state, Color::Black)).size()) + "\n";
+
+	static auto colorize = [](Color c, char ch) {
+		return c == Color::Black ? std::tolower(ch) : ch;
+	};
+
+	for (auto& row : state.squares) {
+		for (auto& storage : row) {
+			s += colorize(storage.piecePtr->getColor(), typeToCharRaw(storage.piecePtr->getType()));
+		}
+		s += "\n";
+	}
+
+	return s;
+}
+
+bool GenericBoard::_checkRepetition()
+{
+	static auto colorToIdx = [](Color c) {
+		return c == Color::White ? 0 : 1;
+	};
+
+	std::string stringed = _stateToString(state);
+	auto& conf = this->configurations[colorToIdx(currentPlayer)];
+	return ++conf[stringed] >= 3;
 }
 
 void GenericBoard::_removeShadows(Color ofColor)
@@ -256,11 +289,13 @@ void GenericBoard::writeDownMove(Position from, PieceType fromType,
 	if (currentPlayer == Color::Black) {
 		turnStrings.back().second = parsed;
 		turnStrings.emplace_back();
-		turnNumber++;
+		++turnNumber;
 	}
 	else {
 		turnStrings.back().first = parsed;
 	}
+
+	moveNumber++;
 }
 
 void GenericBoard::writeDownForfeit()
@@ -273,6 +308,8 @@ void GenericBoard::writeDownForfeit()
 	else {
 		turnStrings.back().first = "0-1";
 	}
+
+	moveNumber++;
 }
 
 void GenericBoard::writeDownPat()
@@ -285,6 +322,8 @@ void GenericBoard::writeDownPat()
 		turnStrings.emplace_back("1/2 -", "1/2");
 		turnNumber++;
 	}
+
+	moveNumber++;
 }
 
 PieceStorage GenericBoard::getKing() const
@@ -318,6 +357,39 @@ PieceStorage GenericBoard::getKing(const BoardState& state, Color color) const
 	}
 
 	return {};
+}
+
+Position GenericBoard::getKingPos() const
+{
+	ProfileDeclare;
+	return getKingPos(state, getPlayingColor());
+}
+
+Position GenericBoard::getKingPos(Color color) const
+{
+	ProfileDeclare;
+	return getKingPos(state, color);
+}
+
+Position GenericBoard::getKingPos(const BoardState& state) const
+{
+	ProfileDeclare;
+	return getKingPos(state, getPlayingColor());
+}
+
+Position GenericBoard::getKingPos(const BoardState& state, Color color) const
+{
+	ProfileDeclare;
+	for (size_t rank = 0; rank < state.squares.size(); ++rank) {
+		for (size_t file = 0; file < state.squares[rank].size(); ++file) {
+			auto& piece = state.squares[rank][file].piecePtr;
+			if (!piece)	continue;
+			if (piece->getType() == PieceType::King && piece->getColor() == color)
+				return { static_cast<int8_t>(rank), static_cast<int8_t>(file) };
+		}
+	}
+
+	return { -1, -1 };
 }
 
 int GenericBoard::getAvailableMoveCount() const
@@ -399,6 +471,11 @@ void GenericBoard::initialize()
 	turnStrings.shrink_to_fit();
 	turnStrings.resize(1);
 	turnNumber = 1;
+	lastProgress = 1;
+	moveNumber = 1;
+
+	configurations.fill({});
+	_checkRepetition();
 
 	_convertNulls();
 	recalculateThreat();
@@ -565,22 +642,32 @@ bool GenericBoard::tryMove(Position toPos)
 
 std::vector<Position> GenericBoard::getPossibleMoves() const
 {
-	return getPossibleMoves(selected);
+	return getPossibleMoves(state, selected);
 }
 
 std::vector<Position> GenericBoard::getPossibleMoves(Position pieceAtPos) const
 {
+	return getPossibleMoves(state, pieceAtPos);
+}
+
+std::vector<Position> GenericBoard::getPossibleMoves(const BoardState& state) const
+{
+	return getPossibleMoves(state, selected);
+}
+
+std::vector<Position> GenericBoard::getPossibleMoves(const BoardState& state, Position pieceAtPos) const
+{
 	ProfileDeclare;
 	if (!withinBounds(pieceAtPos, state.width, state.height))
 		return {};
-	
+
 	auto& piece = state.squares[pieceAtPos.first][pieceAtPos.second];
 	if (!piece.piecePtr)	return {};
 
 	std::vector<Position> filtered;
 
 	for (auto& pos : piece.piecePtr->getAllAvailableMoves(pieceAtPos, state)) {
-		if (_canDoMove(pieceAtPos, pos))
+		if (_canDoMove(state, pieceAtPos, pos))
 			filtered.push_back(pos);
 	}
 
@@ -633,9 +720,19 @@ std::vector<std::pair<std::string, std::string>> GenericBoard::getTurnInfo(int t
 
 bool GenericBoard::_canDoMove(Position fromPos, Position toPos) const
 {
+	return _canDoMove(state, fromPos, toPos);
+}
+
+void GenericBoard::_performMove(Position fromPos, Position toPos)
+{
+	_performMove(state, fromPos, toPos);
+}
+
+bool GenericBoard::_canDoMove(const BoardState& state, Position fromPos, Position toPos) const
+{
 	ProfileDeclare;
 	if (!withinBounds(fromPos, state.width, state.height) ||
-			!withinBounds(toPos, state.width, state.height))
+		!withinBounds(toPos, state.width, state.height))
 		return false;
 
 	auto fakeState = state;
@@ -647,7 +744,6 @@ bool GenericBoard::_canDoMove(Position fromPos, Position toPos) const
 	auto moved = piece.piecePtr->move(fromPos, toPos, fakeState);
 	if (!moved.first)	return false;
 
-
 	recalculateThreat(fakeState);
 	if (getKing(fakeState, thisPlayer).threat[enemyPlayer].size())
 		return false;
@@ -655,11 +751,11 @@ bool GenericBoard::_canDoMove(Position fromPos, Position toPos) const
 	return true;
 }
 
-void GenericBoard::_performMove(Position fromPos, Position toPos)
+void GenericBoard::_performMove(BoardState& state, Position fromPos, Position toPos)
 {
 	ProfileDeclare;
 	if (!withinBounds(fromPos, state.width, state.height) ||
-			!withinBounds(toPos, state.width, state.height))
+		!withinBounds(toPos, state.width, state.height))
 		return;
 
 	//get reference to current piece
@@ -672,14 +768,22 @@ void GenericBoard::_performMove(Position fromPos, Position toPos)
 	//Attempt to move, the move itself will return whether it was success
 	//or not so we dont have to double check possibility.
 	auto moved = piece.piecePtr->move(fromPos, toPos, state);
-	
+
 	//if first is false, the move fas failure
 	if (!moved.first)	return;
-	
-	//if the piece we moved on top of is not nullptr and its None
+
+	//if the piece we moved on top of is not nullptr and its not None
 	//store it in its player's graveyard
-	if (moved.second.piecePtr && moved.second.piecePtr->getType() != PieceType::None)
+	if (moved.second.piecePtr && moved.second.piecePtr->getType() != PieceType::None) {
 		getGraveyard(moved.second.piecePtr->getColor()).push_back(moved.second);
+
+		//we captured, update last progress number
+		lastProgress = moveNumber;
+	}
+	//If we moved pawn even if we didnt capture, its progress
+	else if (piece.piecePtr->getType() == PieceType::Pawn) {
+		lastProgress = moveNumber;
+	}
 }
 
 void GenericBoard::_switchColor()
@@ -693,7 +797,7 @@ void GenericBoard::_checkStaleOrCheckmate()
 	auto movesAvailable = getAvailableMoveCount();
 	bool checked = _isChecked(getKing());
 
-	if (!movesAvailable && !checked) {
+	if ((!movesAvailable && !checked) || moveNumber + 50 <= lastProgress || _checkRepetition()) {
 		winner = Color::Pat;
 		writeDownPat();
 		currentPlayer = Color::None;

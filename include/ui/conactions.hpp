@@ -98,6 +98,26 @@ inline auto typeToChar = [](PieceType type) {
 	return ' ';
 };
 
+inline auto typeToCharRaw = [](PieceType type) {
+	switch (type) {
+		case PieceType::King:
+			return 'K';
+		case PieceType::Queen:
+			return 'Q';
+		case PieceType::Bishop:
+			return 'B';
+		case PieceType::Knight:
+			return 'N';
+		case PieceType::Pawn:
+			return 'P';
+		case PieceType::Rook:
+			return 'R';
+		case PieceType::ShadowPawn:
+			return 'S';
+	}
+	return ' ';
+};
+
 namespace actions {
 	using namespace std::string_literals;
 

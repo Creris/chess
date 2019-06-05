@@ -133,7 +133,7 @@ inline auto cmdToIdx = [](std::string_view input) {
 		{ "export", Command::Export }
 	};
 
-	if (!map.contains(input))	return Command::Invalid;
+	if (map.find(input) == map.end())	return Command::Invalid;
 	return map.at(input);
 };
 

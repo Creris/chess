@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <vector>
+#include <unordered_map>
 #include <string>
 
 class PieceGeneric;
@@ -29,13 +30,24 @@ public:
 private:
 	Color winner = Color::None;
 	Color currentPlayer = Color::White;
+	
 	int turnNumber = 1;
+	int moveNumber = 1;
+
+	int lastProgress = 1;
+
 	std::vector<std::pair<std::string, std::string>> turnStrings;
+
+	std::array<std::unordered_map<std::string, int>, 2> configurations;
 
 	bool _canDoMove(Position fromPos, Position toPos) const;
 	void _performMove(Position fromPos, Position toPos);
+	bool _canDoMove(const BoardState& state, Position fromPos, Position toPos) const;
+	void _performMove(BoardState& state, Position fromPos, Position toPos);
+
 	void _switchColor();
 	void _checkStaleOrCheckmate();
+
 protected:
 	bool withinBounds(Position pos, int width, int height) const;
 	void _clearThreat();
@@ -47,6 +59,10 @@ protected:
 	void _removeShadows(Color ofColor);
 
 	bool _isChecked(PieceStorage storage) const;
+
+	virtual std::string _stateToString(const BoardState& state);
+
+	virtual bool _checkRepetition();
 
 	virtual bool _checkStalemate() const;
 	virtual bool _checkStalemate(Color forColor) const;
@@ -129,6 +145,12 @@ public:
 
 	PieceStorage getKing(const BoardState& state) const;
 	PieceStorage getKing(const BoardState& state, Color color) const;
+
+	Position getKingPos() const;
+	Position getKingPos(Color color) const;
+
+	Position getKingPos(const BoardState& state) const;
+	Position getKingPos(const BoardState& state, Color color) const;
 
 	int getAvailableMoveCount() const;
 	int getAvailableMoveCount(Color color) const;
@@ -226,6 +248,8 @@ public:
 
 	std::vector<Position> getPossibleMoves() const;
 	std::vector<Position> getPossibleMoves(Position pieceAtPos) const;
+	std::vector<Position> getPossibleMoves(const BoardState& state) const;
+	std::vector<Position> getPossibleMoves(const BoardState& state, Position pieceAtPos) const;
 
 	Color getWinner() const;
 

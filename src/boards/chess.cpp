@@ -26,7 +26,7 @@ void ChessBoard::initialize()
 		PieceType::Rook
 	};
 	
-	/*
+	///*
 	for (int i = 0; i < state.width; ++i) {
 		//Distribute pawns
 		addPiece({ 1, i }, PieceType::Pawn, Color::White);
@@ -38,11 +38,13 @@ void ChessBoard::initialize()
 	}
 	//*/
 
+	/*
 	addPiece("c8", PieceType::King, Color::Black);
 
 	addPiece("e3", PieceType::King, Color::White);
 	addPiece("e5", PieceType::Bishop, Color::White);
 	addPiece("d4", PieceType::Queen, Color::White);
+	//*/
 
 	/*
 	addPiece("a7", PieceType::Bishop, Color::Black);

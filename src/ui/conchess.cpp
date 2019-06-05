@@ -110,7 +110,7 @@ void ConsoleChess::help(const std::string& command) const
 		return;
 	}
 
-	std::cout << "\nHelp for command " << command << ":\n\n";
+	std::cout << "Help for command " << command << ":\n\n";
 	std::cout << helpStr << "\n\n";
 }
 

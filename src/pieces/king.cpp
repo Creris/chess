@@ -26,7 +26,7 @@ bool _isAttacked(int8_t rank, int8_t fileBegin, int8_t fileEnd, int attIdx, cons
 
 bool _isInitialPosition(Position pos, Color c) {
 	return pos.second == 4
-		&& (pos.first == 0 && c == Color::White) || (pos.first == 7 && c == Color::Black);
+		&& ((pos.first == 0 && c == Color::White) || (pos.first == 7 && c == Color::Black));
 }
 
 bool PieceKing::canMove(Position fromPos, Position toPos, const BoardState& state) const
