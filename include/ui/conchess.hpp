@@ -16,11 +16,9 @@
 using namespace std::string_literals;
 
 class ConsoleChess {
-	std::shared_ptr<GenericBoard> board = getBoard(BoardType::Chess);
+	std::shared_ptr<GenericBoard> board = ::getBoard(BoardType::Chess);
 	int gridSize = 2;
 	std::pair<int, int> turns = { 1, 1 };
-
-	friend std::shared_ptr<GenericBoard>& getChessBoard();
 protected:
 	ConsoleChess() {
 		initialize();
@@ -44,9 +42,8 @@ public:
 	void turn(int b, int e);
 
 	static ConsoleChess& getInstance();
+	GenericBoard& getBoard();
 };
-
-std::shared_ptr<GenericBoard>& getChessBoard();
 
 std::string getListOfCommands();
 void listCommands();

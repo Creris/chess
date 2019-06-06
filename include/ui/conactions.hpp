@@ -5,6 +5,7 @@
 
 #include "../piecetype.hpp"
 #include "../boardstate.hpp"
+#include "../boards/genericboard.hpp"
 
 #include <vector>
 #include <string_view>
@@ -121,21 +122,21 @@ inline auto typeToCharRaw = [](PieceType type) {
 namespace actions {
 	using namespace std::string_literals;
 
-	bool help(const std::vector<std::string_view>& args);
-	bool _internalHelp(const std::vector<std::string_view>& args);
-	bool export_moves(const std::vector<std::string_view>& args);
-	bool commands(const std::vector<std::string_view>& args);
-	bool quit(const std::vector<std::string_view>& args);
-	bool grid(const std::vector<std::string_view>& args);
-	bool render(const std::vector<std::string_view>& args);
-	bool turn(const std::vector<std::string_view>& args);
-	bool restart(const std::vector<std::string_view>& args);
-	bool select(const std::vector<std::string_view>& args);
-	bool unselect(const std::vector<std::string_view>& args);
-	bool info(const std::vector<std::string_view>& args);
-	bool forfeit(const std::vector<std::string_view>& args);
-	bool move(const std::vector<std::string_view>& args);
-	bool profile(const std::vector<std::string_view>& args);
+	bool help(			GenericBoard& board, const std::vector<std::string_view>& args);
+	bool _internalHelp(	GenericBoard& board, const std::vector<std::string_view>& args);
+	bool export_moves(	GenericBoard& board, const std::vector<std::string_view>& args);
+	bool commands(		GenericBoard& board, const std::vector<std::string_view>& args);
+	bool quit(			GenericBoard& board, const std::vector<std::string_view>& args);
+	bool grid(			GenericBoard& board, const std::vector<std::string_view>& args);
+	bool render(		GenericBoard& board, const std::vector<std::string_view>& args);
+	bool turn(			GenericBoard& board, const std::vector<std::string_view>& args);
+	bool restart(		GenericBoard& board, const std::vector<std::string_view>& args);
+	bool select(		GenericBoard& board, const std::vector<std::string_view>& args);
+	bool unselect(		GenericBoard& board, const std::vector<std::string_view>& args);
+	bool info(			GenericBoard& board, const std::vector<std::string_view>& args);
+	bool forfeit(		GenericBoard& board, const std::vector<std::string_view>& args);
+	bool move(			GenericBoard& board, const std::vector<std::string_view>& args);
+	bool profile(		GenericBoard& board, const std::vector<std::string_view>& args);
 }
 
 

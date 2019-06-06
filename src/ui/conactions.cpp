@@ -1,7 +1,6 @@
 #include "../../include/ui/conactions.hpp"
 #include "../../include/ui/conchess.hpp"
 #include "../../include/profiler.hpp"
-#include "../../include/profiler.hpp"
 
 #include <vector>
 #include <fstream>
@@ -11,25 +10,24 @@
 #include <iomanip>
 
 namespace actions {
-	bool help(const std::vector<std::string_view>& args) {
+	bool help(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
 		ConsoleChess::getInstance().help(join(args, " "));
 		return false;
 	}
 
-	bool _internalHelp(const std::vector<std::string_view>& args) {
+	bool _internalHelp(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
 		std::cout << "Invalid arguments for command " << args[0] << ".\n";
 		ConsoleChess::getInstance().help(join(args, ""));
 		return true;
 	}
 
-	bool export_moves(const std::vector<std::string_view>& args) {
+	bool export_moves(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size() != 1)	return _internalHelp({ "export" });
+		if (args.size() != 1)	return _internalHelp(board, { "export" });
 		std::ofstream moves{ std::string{ args[0] }, std::ios_base::binary };
-		auto& board = getChessBoard();
-		auto allTurns = board->getTurnInfo(1, board->getTurn());
+		auto allTurns = board.getTurnInfo(1, board.getTurn());
 		int counter = 1;
 		std::string result;
 		for (auto& v : allTurns) {
@@ -42,56 +40,56 @@ namespace actions {
 		return false;
 	}
 
-	bool commands(const std::vector<std::string_view>& args) {
+	bool commands(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size())	return _internalHelp({ "commands" });
+		if (args.size())	return _internalHelp(board, { "commands" });
 		listCommands();
 		return false;
 	}
 
-	bool quit(const std::vector<std::string_view>& args) {
+	bool quit(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size() > 2)	return _internalHelp({ "quit" });
+		if (args.size() > 2)	return _internalHelp(board, { "quit" });
 		else if (args.size() == 1) {
-			export_moves(args);
+			export_moves(board, args);
 		}
 		std::cout << "Quiting chess.\n";
 		exit(0);
 	}
 
-	bool grid(const std::vector<std::string_view>& args) {
+	bool grid(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size() != 1)	return _internalHelp({ "grid" });
+		if (args.size() != 1)	return _internalHelp(board, { "grid" });
 		int size = -1;
 		try {
 			size = std::stoi(std::string{ args[0] });
 		} catch (std::invalid_argument&) {
-			return _internalHelp({ "grid" });
+			return _internalHelp(board, { "grid" });
 		} catch (std::out_of_range&) {
-			return _internalHelp({ "grid" });
+			return _internalHelp(board, { "grid" });
 		} catch (...) {
 			std::cout << "Unexpected exception while handling grid rescaling.\n\n";
 			exit(0);
 		}
 		if (!ConsoleChess::getInstance().grid(size))
-			return _internalHelp({ "grid" });
+			return _internalHelp(board, { "grid" });
 
 		return true;
 	}
 
-	bool render(const std::vector<std::string_view>& args) {
+	bool render(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size())	return _internalHelp({ "render" });
+		if (args.size())	return _internalHelp(board, { "render" });
 		ConsoleChess::getInstance().render();
 		std::cout << "\n";
 		return false;
 	}
 
-	bool turn(const std::vector<std::string_view>& args) {
+	bool turn(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size() > 2 || !args.size())	return _internalHelp({ "turn" });
+		if (args.size() > 2 || !args.size())	return _internalHelp(board, { "turn" });
 		if (args[0] == "reset") {
-			auto current = getChessBoard()->getTurn();
+			auto current = board.getTurn();
 			ConsoleChess::getInstance().turn(std::max(current - 8, 1), current);
 			return true;
 		}
@@ -99,7 +97,7 @@ namespace actions {
 		int turnU = 0;
 		int turnV = -1;
 		bool turnVIn = false;
-		int maxTurn = getChessBoard()->getTurn();
+		int maxTurn = board.getTurn();
 
 		try {
 			turnU = std::stoi(std::string{ args[0] });
@@ -108,47 +106,47 @@ namespace actions {
 				turnVIn = true;
 			}
 		} catch (...) {
-			return _internalHelp({ "turn" });
+			return _internalHelp(board, { "turn" });
 		}
 
 		if (turnU > maxTurn || turnU < 1)
-			return _internalHelp({ "turn" });
+			return _internalHelp(board, { "turn" });
 
 		if (!turnVIn) {
 
-			auto info = getChessBoard()->getTurnInfo(turnU);
+			auto info = board.getTurnInfo(turnU);
 			std::cout << "  " << turnU << ". " << info.first << "  " << info.second << "\n\n";
 			return false;
 		}
 
 		if (turnV > maxTurn || turnV < turnU)
-			return _internalHelp({ "turn" });
+			return _internalHelp(board, { "turn" });
 
 		ConsoleChess::getInstance().turn(turnU, turnV);
 
 		return true;
 	}
 
-	bool restart(const std::vector<std::string_view>& args) {
+	bool restart(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size())	return _internalHelp({ "restart" });
-		ConsoleChess::getInstance().initialize();
+		if (args.size())	return _internalHelp(board, { "restart" });
+		board.initialize();
 		return true;
 	}
 
-	bool select(const std::vector<std::string_view>& args) {
+	bool select(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
 		if (args.size() != 1) {
-			return _internalHelp({ "select" });
+			return _internalHelp(board, { "select" });
 		}
 		Position pos = stringToPosition(args[0]);
 		if (pos.first == -1 || pos.second == -1) {
-			return _internalHelp({ "select" });
+			return _internalHelp(board, { "select" });
 		}
-		auto& board = getChessBoard();
-		if (!board->select(pos)) {
+
+		if (!board.select(pos)) {
 			std::cout << "Can't select piece at " << args[0] << ".";
-			auto piece = board->getPiece(pos);
+			auto piece = board.getPiece(pos);
 			if (!piece) {
 				std::cout << " No piece found at this position.\n";
 			}
@@ -156,7 +154,7 @@ namespace actions {
 					 piece->getType() == PieceType::None) {
 				std::cout << " No piece found at this position.\n";
 			}
-			else if (piece->getColor() != board->getPlayingColor()) {
+			else if (piece->getColor() != board.getPlayingColor()) {
 				std::cout << " Piece is not owned by the playing player.\n";
 			}
 			else {
@@ -168,10 +166,10 @@ namespace actions {
 		return true;
 	}
 
-	bool unselect(const std::vector<std::string_view>& args) {
+	bool unselect(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size())	return _internalHelp({ "unselect" });
-		getChessBoard()->unselect();
+		if (args.size())	return _internalHelp(board, { "unselect" });
+		board.unselect();
 		return true;
 	}
 
@@ -222,17 +220,16 @@ namespace actions {
 		return typeName;
 	};
 
-	std::vector<Position> _getSelfCheckPositions(Position atPosition,
+	std::vector<Position> _getSelfCheckPositions(GenericBoard& board, Position atPosition,
 												 const std::vector<Position>& valid) {
 		ProfileDeclare;
-		auto& board = getChessBoard();
-		auto& storage = board->getPieceStorage(atPosition);
+		auto& storage = board.getPieceStorage(atPosition);
 		if (!storage.piecePtr)	return {};
 		if (storage.piecePtr->getType() == PieceType::ShadowPawn ||
 			storage.piecePtr->getType() == PieceType::None)
 			return {};
 
-		auto allMoves = storage.piecePtr->getAllAvailableMoves(atPosition, board->getState());
+		auto allMoves = storage.piecePtr->getAllAvailableMoves(atPosition, board.getState());
 		allMoves.erase(std::remove_if(allMoves.begin(), allMoves.end(), [&](const Position& p) {
 			return std::find(valid.begin(), valid.end(), p) != valid.end();
 									  }), allMoves.end());
@@ -240,14 +237,13 @@ namespace actions {
 		return allMoves;
 	}
 
-	void _printPossibleMoves(Position pos) {
+	void _printPossibleMoves(GenericBoard& board, Position pos) {
 		ProfileDeclare;
 		if (pos.first == -1 || pos.second == -1)	return;
-		auto& board = getChessBoard();
-		auto& piece = board->getPieceStorage(pos);
+		auto& piece = board.getPieceStorage(pos);
 
-		auto valid = board->getPossibleMoves(pos);
-		auto invalid = _getSelfCheckPositions(pos, valid);
+		auto valid = board.getPossibleMoves(pos);
+		auto invalid = _getSelfCheckPositions(board, pos, valid);
 
 		static auto _cleanBack = [](std::string& s) {
 			if (s.size() >= 2 && s[s.size() - 1] == ' ' && s[s.size() - 2] == ',') {
@@ -263,7 +259,7 @@ namespace actions {
 			auto counter = 0;
 			for (auto& move : valid) {
 				output += positionToString(move);
-				auto target = board->getPiece(move);
+				auto target = board.getPiece(move);
 				if (target && target->getColor() != piece.piecePtr->getColor()
 					&& target->getType() != PieceType::ShadowPawn
 					&& target->getType() != PieceType::None)
@@ -287,7 +283,7 @@ namespace actions {
 			output += "\n    "s;
 			for (auto& move : invalid) {
 				output += positionToString(move);
-				auto target = board->getPiece(move);
+				auto target = board.getPiece(move);
 				if (target && target->getColor() != piece.piecePtr->getColor()
 					&& target->getType() != PieceType::ShadowPawn
 					&& target->getType() != PieceType::None)
@@ -309,12 +305,12 @@ namespace actions {
 			std::cout << "    " << strip(output) << "\n\n";
 	}
 
-	bool info(const std::vector<std::string_view>& args) {
+	bool info(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size() != 1)	return _internalHelp({ "info" });
+		if (args.size() != 1)	return _internalHelp(board, { "info" });
 		Position pos = stringToPosition(args[0]);
-		if (pos.first == -1 || pos.second == -1)	return _internalHelp({ "info" });
-		auto& storage = getChessBoard()->getPieceStorage(pos);
+		if (pos.first == -1 || pos.second == -1)	return _internalHelp(board, { "info" });
+		auto& storage = board.getPieceStorage(pos);
 		std::cout << "Information about position " << args[0] << ":\n";
 		auto type = PieceType::None;
 		auto color = Color::None;
@@ -336,7 +332,7 @@ namespace actions {
 
 		if (type != PieceType::ShadowPawn && type != PieceType::None) {
 			std::cout << "  Piece at this position has following moves available:\n";
-			_printPossibleMoves(pos);
+			_printPossibleMoves(board, pos);
 		}
 
 		std::cout << "\n  Threats:    " << whiteAttacking << " White "
@@ -376,12 +372,12 @@ namespace actions {
 		return true;
 	}
 
-	bool forfeit(const std::vector<std::string_view>& args) {
+	bool forfeit(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size())	return _internalHelp({ "forfeit" });
-		std::cout << "Player " << colorToName(getChessBoard()->getPlayingColor()) << " forfeits!\n";
-		getChessBoard()->forfeit();
-		render({});
+		if (args.size())	return _internalHelp(board, { "forfeit" });
+		std::cout << "Player " << colorToName(board.getPlayingColor()) << " forfeits!\n";
+		board.forfeit();
+		render(board, {});
 
 		do {
 			std::cout << "(R) Restart\n";
@@ -394,25 +390,25 @@ namespace actions {
 			if (input.size() > 1 && std::tolower(input[0]) != 'e')	continue;
 			switch (std::tolower(input[0])) {
 				case 'r':
-					return restart({});
+					return restart(board, {});
 				case 'q':
-					return quit({});
+					return quit(board, {});
 				case 'e':
 				{
 					auto split_ = split(std::string_view{ input });
 					split_.erase(split_.begin());
-					export_moves(split_);
+					export_moves(board, split_);
 				}
 			}
 		} while (true);
 		return true;
 	}
 
-	bool _moveSelected(std::string_view to) {
+	bool _moveSelected(GenericBoard& board, std::string_view to) {
 		ProfileDeclare;
-		auto selected = getChessBoard()->getSelectedPosition();
+		auto selected = board.getSelectedPosition();
 		if (selected.first == -1 || selected.second == -1)
-			return _internalHelp({ "move" });
+			return _internalHelp(board, { "move" });
 
 		Position pos = stringToPosition(to);
 		if (pos.first == -1 || pos.second == -1) {
@@ -458,34 +454,36 @@ namespace actions {
 			return selected;
 		};
 
-		if (!getChessBoard()->tryMove(pos, promotion)) {
+		if (!board.tryMove(pos, promotion)) {
 			std::cout << "This move cannot be performed. Try again.\n\n";
 			return false;
 		}
-		unselect({});
-		turn({ "reset" });
+		unselect(board, {});
+		turn(board, { "reset" });
 		return true;
 	}
 
-	bool _moveSelect(std::string_view from, std::string_view to) {
+	bool _moveSelect(GenericBoard& board, std::string_view from, std::string_view to) {
 		ProfileDeclare;
 		Position fromPos = stringToPosition(from);
 		if (fromPos.first == -1 || fromPos.second == -1) {
 			std::cout << "Invalid starting position " << from << "\n\n";
 			return false;
 		}
-		getChessBoard()->select(fromPos);
-		return _moveSelected(to);
+		board.select(fromPos);
+		bool did = _moveSelected(board, to);
+		unselect(board, {});
+		return did;
 	}
 
-	bool move(const std::vector<std::string_view>& args) {
+	bool move(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
-		if (args.size() == 1)		return _moveSelected(args[0]);
-		else if (args.size() == 2)	return _moveSelect(args[0], args[1]);
-		else						return _internalHelp({ "move" });
+		if (args.size() == 1)		return _moveSelected(board, args[0]);
+		else if (args.size() == 2)	return _moveSelect(board, args[0], args[1]);
+		else						return _internalHelp(board, { "move" });
 	}
 
-	bool profile(const std::vector<std::string_view>& args) {
+	bool profile(GenericBoard& board, const std::vector<std::string_view>& args) {
 		ProfileDeclare;
 		auto size = args.size();
 		if (!size || (size == 1 && args[0] == "off")) {
@@ -501,7 +499,7 @@ namespace actions {
 			auto rest = std::vector<std::string_view>{ args.begin(), args.end() };
 			if (args[0] == "on")	rest.erase(rest.begin());
 			if (rest.size() > 2) {
-				return _internalHelp({ "profile" });
+				return _internalHelp(board, { "profile" });
 			}
 
 			if (rest.size() > 1) {
@@ -518,13 +516,13 @@ namespace actions {
 					Profiler::traceback(1);
 					Profiler::verbosity(1);
 				}
-				else return _internalHelp({ "profile" });
+				else return _internalHelp(board, { "profile" });
 			}
 
 			Profiler::target(std::string{ rest[0] });
 			return true;
 		}
 
-		return _internalHelp({ "profile" });
+		return _internalHelp(board, { "profile" });
 	}
 }

@@ -20,11 +20,6 @@
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
-std::shared_ptr<GenericBoard>& getChessBoard()
-{
-	return ConsoleChess::getInstance().board;
-}
-
 void ConsoleChess::initialize()
 {
 	ProfileDeclare;
@@ -181,7 +176,7 @@ inline bool handleCommand(std::string_view cmd, const std::vector<std::string>& 
 		ConsoleChess::getInstance().help();
 		return false;
 	}
-	return commandHandlers[cmdV](_strsToStreams(args));
+	return commandHandlers[cmdV](ConsoleChess::getInstance().getBoard(), _strsToStreams(args));
 }
 
 bool ConsoleChess::promptInput()
@@ -237,6 +232,11 @@ ConsoleChess& ConsoleChess::getInstance()
 	return c;
 }
 
+GenericBoard& ConsoleChess::getBoard()
+{
+	return *getInstance().board;
+}
+
 void ConsoleChess::render() const
 {
 	ProfileDeclare;
@@ -286,7 +286,9 @@ void ConsoleChess::render() const
 
 		std::cout << "\n";
 
-		auto selected = getChessBoard()->getSelectedPosition();
+		auto& realBoard = ConsoleChess::getInstance().getBoard();
+
+		auto selected = realBoard.getSelectedPosition();
 		std::string output = _generateEmpty(board, grid, gridSize);
 		std::vector<std::string> arrOut = split(output, "\n");
 
@@ -305,11 +307,10 @@ void ConsoleChess::render() const
 			return Position{ 2 + 2 * boardPos.first, 5 + 4 * boardPos.second };
 		};
 
-		auto& realBoard = getChessBoard();
-		auto& boardState = realBoard->getState();
+		auto& boardState = realBoard.getState();
 		for (int i = 0; i < boardState.height; ++i) {
 			for (int j = 0; j < boardState.width; ++j) {
-				auto piece = realBoard->getPiece({ i, j });
+				auto piece = realBoard.getPiece({ i, j });
 				if (!piece)	continue;
 				auto pieceChar = typeToChar(piece->getType());
 				if (piece->getColor() == Color::Black)
@@ -328,7 +329,7 @@ void ConsoleChess::render() const
 			arrOut[arrOut.size() - 1 - selPos.first][selPos.second + 1] = '<';
 			arrOut[arrOut.size() - 1 - selPos.first + 1][selPos.second] = '^';
 
-			for (auto& move : realBoard->getPossibleMoves()) {
+			for (auto& move : realBoard.getPossibleMoves()) {
 				auto movePos = computePosition(move);
 				auto& chr = arrOut[arrOut.size() - 1 - movePos.first][movePos.second];
 				if (chr != ' ') {
@@ -343,16 +344,16 @@ void ConsoleChess::render() const
 			}
 		}
 		
-		if (realBoard->getWinner() == Color::Pat) {
+		if (realBoard.getWinner() == Color::Pat) {
 			std::cout << "Game over! The game ended in Pat.\n\n";
 		}
-		else if (realBoard->getWinner() != Color::None) {
+		else if (realBoard.getWinner() != Color::None) {
 
-			std::cout << "Game over! Winner is " << colorToName(realBoard->getWinner()) << "\n\n";
+			std::cout << "Game over! Winner is " << colorToName(realBoard.getWinner()) << "\n\n";
 		}
 		else {
-			std::cout << "Move: " << realBoard->getTurn() << ", Turn: "
-				<< colorToName(realBoard->getPlayingColor()) << "\n\n";
+			std::cout << "Move: " << realBoard.getTurn() << ", Turn: "
+				<< colorToName(realBoard.getPlayingColor()) << "\n\n";
 		}
 
 		auto turns = ConsoleChess::getInstance().turn();
@@ -366,7 +367,7 @@ void ConsoleChess::render() const
 		turnTable.emplace_back("       Moves:");
 		turnTable.emplace_back();
 
-		for (auto& v : realBoard->getTurnInfo(turns.first, turns.second)) {
+		for (auto& v : realBoard.getTurnInfo(turns.first, turns.second)) {
 			auto turnStr = std::to_string(turns.first);
 			if (turns.first < 10)
 				turnStr = "  " + turnStr;
@@ -381,13 +382,13 @@ void ConsoleChess::render() const
 		turnTable.resize(arrOut.size(), "");
 		for (auto& v : turnTable)	v.resize(movesWidth, ' ');
 
-		static auto _formatGrave = [&](Color c, int width) {
+		static auto _formatGrave = [&](GenericBoard& board, Color c, int width) {
 			ProfileDeclare;
 
 			std::vector<std::string> formatted;
 			formatted.emplace_back();
 			int counter = 0;
-			for (auto& ps : getChessBoard()->getGraveyard(c)) {
+			for (auto& ps : board.getGraveyard(c)) {
 				formatted.back() += typeToChar(ps.piecePtr->getType()) + ", "s;
 				if (counter++ == 3) {
 					formatted.emplace_back();
@@ -410,8 +411,8 @@ void ConsoleChess::render() const
 		graveyard.emplace_back("   White:");
 		graveyard.emplace_back("");
 
-		std::vector<std::string> wGraveFormatted = _formatGrave(Color::White, 14);
-		std::vector<std::string> bGraveFormatted = _formatGrave(Color::Black, 14);
+		std::vector<std::string> wGraveFormatted = _formatGrave(realBoard, Color::White, 14);
+		std::vector<std::string> bGraveFormatted = _formatGrave(realBoard, Color::Black, 14);
 		graveyard.insert(graveyard.end(), wGraveFormatted.begin(), wGraveFormatted.end());
 
 		graveyard.resize(9);
@@ -448,7 +449,7 @@ void ConsoleChess::render() const
 
 	printBoard(graphicBoard, gridSize);
 
-	actions::turn({ "reset" });
+	actions::turn(*board, { "reset" });
 }
 
 bool ConsoleChess::isActive() const

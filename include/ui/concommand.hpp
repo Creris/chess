@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "conactions.hpp"
+#include "../boards/genericboard.hpp"
 
 using namespace std::string_literals;
 
@@ -137,7 +138,7 @@ inline auto cmdToIdx = [](std::string_view input) {
 	return map.at(input);
 };
 
-using CommandHandler = bool(*)(const std::vector<std::string_view>& args);
+using CommandHandler = bool(*)(GenericBoard& board, const std::vector<std::string_view>& args);
 
 inline std::unordered_map<Command, CommandHandler> commandHandlers = {
 	{ Command::Help,		actions::help },
