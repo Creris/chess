@@ -40,14 +40,21 @@ private:
 
 	std::array<std::unordered_map<std::string, int>, 2> configurations;
 
-	bool _canDoMove(Position fromPos, Position toPos) const;
+	/*
+		For random picking for AI
+	*/
+	std::array<std::vector<Position>, 2> piecesVector;
+
+	void _removePieceFromVector(Color ofColor, Position pos);
+	void _addPieceToVector(Color ofColor, Position pos);
+
+	bool _canDoMove(Position fromPos, Position toPos);
 	void _performMove(Position fromPos, Position toPos);
-	bool _canDoMove(const BoardState& state, Position fromPos, Position toPos) const;
+	bool _canDoMove(BoardState& state, Position fromPos, Position toPos);
 	void _performMove(BoardState& state, Position fromPos, Position toPos);
 
 	void _switchColor();
 	void _checkStaleOrCheckmate();
-
 protected:
 	bool withinBounds(Position pos, int width, int height) const;
 	void _clearThreat();
@@ -64,17 +71,17 @@ protected:
 
 	virtual bool _checkRepetition();
 
-	virtual bool _checkStalemate() const;
-	virtual bool _checkStalemate(Color forColor) const;
+	virtual bool _checkStalemate();
+	virtual bool _checkStalemate(Color forColor);
 
-	virtual bool _checkCheckmate() const;
-	virtual bool _checkCheckmate(Color forColor) const;
+	virtual bool _checkCheckmate();
+	virtual bool _checkCheckmate(Color forColor);
 
 	virtual std::string parseTurnToString(Position from, PieceType fromType,
 										  Color fromColor, Position to,
 										  PieceType toType, Color toColor,
 										  PieceType upgraded,
-										  const std::array<threat_t, 2>& threats) const;
+										  const std::array<threat_t, 2>& threats);
 
 	void writeDownMove(Position from, PieceType fromType,
 					   Color fromColor, Position to,
@@ -136,6 +143,9 @@ protected:
 
 	int upgradeFieldSize = 1;
 	Position selected = { -1, -1 };
+
+	bool _continualCheckCalc(Color checking) const;
+	bool _continualCheckCalc(BoardState& state, Color checking) const;
 public:
 	GenericBoard(int boardWidth, int boardHeight, int upgradeRows = 1);
 	virtual ~GenericBoard() = default;
@@ -152,8 +162,8 @@ public:
 	Position getKingPos(const BoardState& state) const;
 	Position getKingPos(const BoardState& state, Color color) const;
 
-	int getAvailableMoveCount() const;
-	int getAvailableMoveCount(Color color) const;
+	int getAvailableMoveCount();
+	int getAvailableMoveCount(Color color);
 
 	void addPiece(Position position, PieceType type, Color color);
 	virtual void addPiece(const char* strPos, PieceType type, Color color);
@@ -169,6 +179,9 @@ public:
 
 	const std::vector<PieceStorage>& getGraveyard(Color forColor) const;
 	std::vector<PieceStorage>& getGraveyard(Color forColor);
+
+	const std::vector<Position>& getPieces(Color forColor) const;
+	std::vector<Position>& getPieces(Color forColor);
 
 	bool select(Position atPosition);
 	void unselect();
@@ -246,10 +259,10 @@ public:
 		return tryMove(selected, toPos, onUpgrade);
 	}
 
-	std::vector<Position> getPossibleMoves() const;
-	std::vector<Position> getPossibleMoves(Position pieceAtPos) const;
-	std::vector<Position> getPossibleMoves(const BoardState& state) const;
-	std::vector<Position> getPossibleMoves(const BoardState& state, Position pieceAtPos) const;
+	std::vector<Position> getPossibleMoves();
+	std::vector<Position> getPossibleMoves(Position pieceAtPos);
+	std::vector<Position> getPossibleMoves(const BoardState& state);
+	std::vector<Position> getPossibleMoves(const BoardState& state, Position pieceAtPos);
 
 	Color getWinner() const;
 

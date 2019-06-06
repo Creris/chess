@@ -64,6 +64,7 @@ private:
 	static std::string buffer;
 
 	friend void dumpBuffer(bool exiting);
+	friend void partialDump();
 
 	static timepoint_t totalSpent;
 public:

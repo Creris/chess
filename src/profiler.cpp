@@ -76,6 +76,14 @@ std::string formatFrame(const StackFrame& frame, const timepoint_t& now) {
 	return buffer;
 }
 
+void partialDump() {
+	if (!Profiler::target().size())	return;
+
+	std::ofstream f{ Profiler::target() };
+	Profiler::buffer.shrink_to_fit();
+	f.write(&Profiler::buffer[0], Profiler::buffer.size());
+}
+
 void dumpBuffer(bool exiting) {
 	if (!Profiler::target().size())	return;
 
@@ -135,6 +143,10 @@ Profiler::~Profiler()
 	auto now = chrono::high_resolution_clock::now().time_since_epoch();
 	if (targetFile.size()) {
 		buffer += formatFrame(callstack.back(), now);
+		if (buffer.size() > 1024 * 1024) {
+			partialDump();
+			buffer.clear();
+		}
 	}
 
 	callstack.pop_back();
